@@ -1,0 +1,445 @@
+[
+  {
+    "id": "meeting-1",
+    "contactId": "contact-rahul-sharma",
+    "title": "Architecture Discovery & Latency Bottleneck Exploration",
+    "scheduledAt": "2026-05-15T14:00:00Z",
+    "durationMinutes": 45,
+    "status": "completed",
+    "meetingType": "technical-review",
+    "agenda": [
+      "Acme current platform overview & growth projections",
+      "Discussion of p99 latency regressions in microservice mesh",
+      "Requirements for distributed state and cache invalidation"
+    ],
+    "summary": "Explored Acme Technologies’ multi-region latency bottlenecks during peak ingestion spikes. Rahul shared that their current Redis cluster struggles during database failovers, breaching the 200ms latency SLA.",
+    "discussionTopics": [
+      "Real-time query performance bottlenecks in Acme cloud mesh",
+      "Hybrid cloud migration from GCP to AWS multi-region",
+      "Strict 200ms p99 SLA required by Acme financial clients"
+    ],
+    "decisions": [
+      "Agreed to benchmark Hindsight caching pipeline against Acme anonymized traffic trace",
+      "Prioritize automated failover handling over cross-region write consensus"
+    ],
+    "followUps": [
+      "Send vector benchmark comparison with Redis Enterprise by May 22",
+      "Rahul will secure sample telemetry data profile from data eng lead"
+    ],
+    "commitments": [
+      {
+        "id": "com-m1-1",
+        "meetingId": "meeting-1",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Provide distributed vector query pipeline benchmark figures",
+        "description": "Run benchmark with 10k concurrent queries on AWS m6g.4xlarge instances.",
+        "dueDate": "2026-05-22",
+        "status": "completed",
+        "sourceMeetingTitle": "Architecture Discovery & Latency Bottleneck Exploration",
+        "sourceMeetingDate": "2026-05-15"
+      },
+      {
+        "id": "com-m1-2",
+        "meetingId": "meeting-1",
+        "contactId": "contact-rahul-sharma",
+        "owner": "contact",
+        "ownerName": "Rahul Sharma",
+        "title": "Share anonymized traffic telemetry profiles",
+        "description": "Provide JSON export of 1-hour peak traffic telemetry for replay testing.",
+        "dueDate": "2026-05-25",
+        "status": "completed",
+        "sourceMeetingTitle": "Architecture Discovery & Latency Bottleneck Exploration",
+        "sourceMeetingDate": "2026-05-15"
+      }
+    ],
+    "notes": "Rahul is very sharp. Directly asked about our internal Raft consensus overhead. Values concise engineering answers over generic sales promises."
+  },
+  {
+    "id": "meeting-2",
+    "contactId": "contact-rahul-sharma",
+    "title": "PoC Review & Edge Cache Architecture Evaluation",
+    "scheduledAt": "2026-06-20T15:00:00Z",
+    "durationMinutes": 45,
+    "status": "completed",
+    "meetingType": "technical-review",
+    "agenda": [
+      "Replay test results on Acme 1-hour peak telemetry",
+      "Zero-data-retention & GDPR compliance review",
+      "Architecture for multi-region failover"
+    ],
+    "summary": "Reviewed PoC benchmark results replaying Acme peak traffic. p99 latency stabilized at 112ms (well below their 200ms target). Discussed compliance requirements for banking customers.",
+    "discussionTopics": [
+      "Evaluation of edge cache invalidation latency",
+      "Multi-region failover recovery time objective (RTO < 5s)",
+      "Security audit and SOC2 Type II compliance pack request"
+    ],
+    "decisions": [
+      "Selected hybrid edge caching topology with AWS KMS key isolation",
+      "Agreed on target uptime commitment of 99.95%"
+    ],
+    "followUps": [
+      "Provide SOC2 Type II compliance report to Priya Desai (VP Security)",
+      "Setup shared Slack connect channel for engineering teams"
+    ],
+    "commitments": [
+      {
+        "id": "com-m2-1",
+        "meetingId": "meeting-2",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Prepare security audit SOC2 Type II compliance pack",
+        "description": "Collate latest SOC2 Type II report, penetration testing executive summary, and subprocessor list.",
+        "dueDate": "2026-06-28",
+        "status": "completed",
+        "sourceMeetingTitle": "PoC Review & Edge Cache Architecture Evaluation",
+        "sourceMeetingDate": "2026-06-20"
+      },
+      {
+        "id": "com-m2-2",
+        "meetingId": "meeting-2",
+        "contactId": "contact-rahul-sharma",
+        "owner": "contact",
+        "ownerName": "Rahul Sharma",
+        "title": "Introduce VP of Security (Priya Desai) for architecture signoff",
+        "description": "Send email intro and invite to joint review meeting.",
+        "dueDate": "2026-06-25",
+        "status": "completed",
+        "sourceMeetingTitle": "PoC Review & Edge Cache Architecture Evaluation",
+        "sourceMeetingDate": "2026-06-20"
+      }
+    ],
+    "notes": "Rahul highlighted that vendor lock-in is a hot topic with their board. We assured him full open-standard export compatibility."
+  },
+  {
+    "id": "meeting-3",
+    "contactId": "contact-rahul-sharma",
+    "title": "Security Review & Data Governance Architecture",
+    "scheduledAt": "2026-07-28T16:00:00Z",
+    "durationMinutes": 50,
+    "status": "completed",
+    "meetingType": "technical-review",
+    "agenda": [
+      "SOC2 verification with Priya Desai and Rahul Sharma",
+      "Customer PII tokenization pipeline",
+      "VPC peering topology and egress cost analysis"
+    ],
+    "summary": "Joint session with Rahul and Priya Desai. Confirmed compliance with zero-retention policy for AI query caches. Cleared security gate with only minor key rotation questions.",
+    "discussionTopics": [
+      "Customer PII tokenization and masking on edge nodes",
+      "Automated key rotation cadence (every 90 days via AWS KMS)",
+      "Staging VPC network configuration and latency overhead"
+    ],
+    "decisions": [
+      "Signed off on zero-data-retention policy for AI query caches",
+      "Adopt AWS KMS customer managed keys (CMK) for data isolation"
+    ],
+    "followUps": [
+      "Provision staging VPC for Acme QA team",
+      "Provide Terraform modules for infrastructure provisioning"
+    ],
+    "commitments": [
+      {
+        "id": "com-m3-1",
+        "meetingId": "meeting-3",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Implement automated key rotation verification via AWS KMS",
+        "description": "Send test evidence script demonstrating 90-day automatic key rotation in staging.",
+        "dueDate": "2026-08-08",
+        "status": "completed",
+        "sourceMeetingTitle": "Security Review & Data Governance Architecture",
+        "sourceMeetingDate": "2026-07-28"
+      },
+      {
+        "id": "com-m3-2",
+        "meetingId": "meeting-3",
+        "contactId": "contact-rahul-sharma",
+        "owner": "contact",
+        "ownerName": "Rahul Sharma",
+        "title": "Provision staging VPC for end-to-end load testing",
+        "description": "Acme DevOps team to open security groups for load generation cluster.",
+        "dueDate": "2026-08-12",
+        "status": "completed",
+        "sourceMeetingTitle": "Security Review & Data Governance Architecture",
+        "sourceMeetingDate": "2026-07-28"
+      }
+    ],
+    "notes": "Rahul reminded us: \"We start every meeting by reviewing open action items.\" Be diligent in tracking every open task."
+  },
+  {
+    "id": "meeting-4",
+    "contactId": "contact-rahul-sharma",
+    "title": "Pre-Production Load Test & SLA Finalization",
+    "scheduledAt": "2026-08-30T14:30:00Z",
+    "durationMinutes": 45,
+    "status": "completed",
+    "meetingType": "executive-sync",
+    "agenda": [
+      "50,000 req/sec stress test results",
+      "Failover simulation and partition tolerance",
+      "SLA penalty clauses and support tier terms"
+    ],
+    "summary": "Reviewed 50,000 req/sec stress test. Cluster survived with p99 under 138ms. Rahul voiced concern regarding slow documentation updates on our developer portal.",
+    "discussionTopics": [
+      "Latency distribution curves across 95th, 99th, and 99.9th percentiles",
+      "Terraform rollback automation in case of botched canary deployments",
+      "Enterprise support response times for P0 severity incidents"
+    ],
+    "decisions": [
+      "Finalized SLA target: 150ms p99 with monetary service credits if violated",
+      "Agreed on Enterprise 24/7 support tier with 30-minute P0 response"
+    ],
+    "followUps": [
+      "Document emergency rollback runbook for SRE on-call engineers",
+      "Rahul will brief Acme CFO on contract numbers"
+    ],
+    "commitments": [
+      {
+        "id": "com-m4-1",
+        "meetingId": "meeting-4",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Document emergency rollback procedure for Terraform scripts",
+        "description": "Step-by-step CLI procedure with automated health-check verification and gitops revert.",
+        "dueDate": "2026-09-08",
+        "status": "completed",
+        "sourceMeetingTitle": "Pre-Production Load Test & SLA Finalization",
+        "sourceMeetingDate": "2026-08-30"
+      },
+      {
+        "id": "com-m4-2",
+        "meetingId": "meeting-4",
+        "contactId": "contact-rahul-sharma",
+        "owner": "contact",
+        "ownerName": "Rahul Sharma",
+        "title": "Review proposal with Acme CFO for annual contract commitment",
+        "description": "Present cost-benefit analysis and multi-year pricing structure to CFO.",
+        "dueDate": "2026-09-12",
+        "status": "completed",
+        "sourceMeetingTitle": "Pre-Production Load Test & SLA Finalization",
+        "sourceMeetingDate": "2026-08-30"
+      }
+    ],
+    "notes": "Rahul mentioned their upcoming Q4 team reorganization. Two senior engineers might transition to a new data team, meaning we need fool-proof onboarding documentation."
+  },
+  {
+    "id": "meeting-5",
+    "contactId": "contact-rahul-sharma",
+    "title": "Q3 Architecture Review & Latency SLA Sync",
+    "scheduledAt": "2026-09-14T14:30:00Z",
+    "durationMinutes": 40,
+    "status": "completed",
+    "meetingType": "executive-sync",
+    "agenda": [
+      "Review contract term sheet and SLA credit appendix",
+      "Q4 phased rollout timeline (US-East first, then EU-West)",
+      "SRE team staffing and migration war room schedule"
+    ],
+    "summary": "Reviewed contract final terms and phased rollout schedule. Rahul raised serious questions on latency regressions during database schema migration next month and requested Graviton benchmark data before signing.",
+    "discussionTopics": [
+      "Contract term sheet review and SLA appendix credit tiers",
+      "October 15 rollout target date for US-East region",
+      "Risk of latency spikes when Acme migrates Postgres tables simultaneously",
+      "CFO review of annual infrastructure software budget"
+    ],
+    "decisions": [
+      "US-East phased rollout approved for October 15th milestone",
+      "Agreed to provide custom Graviton (arm64) efficiency benchmarks"
+    ],
+    "followUps": [
+      "Deliver updated SLA appendix with credit guarantees for p99 > 150ms",
+      "Share Graviton arm64 vs x86 benchmark data"
+    ],
+    "commitments": [
+      {
+        "id": "com-m5-1",
+        "meetingId": "meeting-5",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Deliver updated SLA appendix with credit guarantees for p99 > 150ms",
+        "description": "Incorporate tiered rebate clauses for any consecutive 15-minute window exceeding 150ms p99 latency.",
+        "dueDate": "2026-10-05",
+        "status": "open",
+        "sourceMeetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+        "sourceMeetingDate": "2026-09-14"
+      },
+      {
+        "id": "com-m5-2",
+        "meetingId": "meeting-5",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Share benchmark comparisons between arm64 and x86 Graviton instances",
+        "description": "Compare memory throughput and query p99 latency between c7g.4xlarge (Graviton3) and c6i.4xlarge.",
+        "dueDate": "2026-10-03",
+        "status": "open",
+        "sourceMeetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+        "sourceMeetingDate": "2026-09-14"
+      },
+      {
+        "id": "com-m5-3",
+        "meetingId": "meeting-5",
+        "contactId": "contact-rahul-sharma",
+        "owner": "contact",
+        "ownerName": "Rahul Sharma",
+        "title": "Confirm SRE team headcount assigned to migration war room",
+        "description": "Provide list of dedicated on-call engineers for the October 15 production cutover.",
+        "dueDate": "2026-10-08",
+        "status": "open",
+        "sourceMeetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+        "sourceMeetingDate": "2026-09-14"
+      },
+      {
+        "id": "com-m5-4",
+        "meetingId": "meeting-5",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Provide sandbox API keys for 3 junior platform engineers",
+        "description": "Sent developer credentials and documentation links via secure 1Password link.",
+        "dueDate": "2026-09-18",
+        "status": "completed",
+        "sourceMeetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+        "sourceMeetingDate": "2026-09-14"
+      },
+      {
+        "id": "com-m5-5",
+        "meetingId": "meeting-5",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Deliver revised multi-region architecture topology diagram",
+        "description": "Update architecture diagram incorporating AWS KMS customer managed key (CMK) isolation for edge nodes.",
+        "dueDate": "2026-09-24",
+        "status": "open",
+        "sourceMeetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+        "sourceMeetingDate": "2026-09-14"
+      }
+    ],
+    "notes": "Rahul is under pressure from his CFO on cloud cost per query. If we demonstrate that Graviton arm64 lowers Acme node cost by 22%, the contract is virtually guaranteed."
+  },
+  {
+    "id": "meeting-6",
+    "contactId": "contact-rahul-sharma",
+    "title": "Contract Execution & Production Deployment Readiness",
+    "scheduledAt": "2026-10-02T15:00:00Z",
+    "durationMinutes": 30,
+    "status": "upcoming",
+    "meetingType": "executive-sync",
+    "agenda": [
+      "Review open commitments from Sept 14 (Graviton benchmarks & SLA appendix)",
+      "Address schema migration risk and latency mitigation plan",
+      "Finalize October 15 rollout date and SRE war room roster",
+      "Execute annual enterprise contract"
+    ],
+    "summary": "Upcoming meeting with Rahul Sharma to address the Graviton benchmarks, finalize the SLA credit appendix, and secure the annual agreement for the October 15 US-East rollout.",
+    "discussionTopics": [
+      "Graviton benchmark findings and 24% cost-efficiency gain",
+      "Guaranteed 150ms p99 SLA rebate terms",
+      "Postgres schema migration staging window"
+    ],
+    "decisions": [],
+    "followUps": [],
+    "commitments": [],
+    "notes": "Crucial meeting: Rahul expects to start with action items immediately. Have the Graviton numbers ready upfront."
+  },
+  {
+    "id": "meeting-sc-1",
+    "contactId": "contact-sarah-chen",
+    "title": "Workflow Designer UX Review & Component Library Alignment",
+    "scheduledAt": "2026-09-08T10:00:00Z",
+    "durationMinutes": 30,
+    "status": "completed",
+    "meetingType": "technical-review",
+    "agenda": [
+      "Walkthrough of NexaFlow canvas editor",
+      "Component integration requirements"
+    ],
+    "summary": "Reviewed NexaFlow core workflow editor. Sarah shared that end-users found node connections unintuitive. Agreed to supply Figma prototype.",
+    "discussionTopics": [
+      "Canvas zooming latency on low-spec client machines",
+      "Reusable component primitives for custom nodes"
+    ],
+    "decisions": [
+      "Adopt declarative schema definition for node sockets"
+    ],
+    "followUps": [
+      "Supply interactive Figma mockup of improved socket handles"
+    ],
+    "commitments": [
+      {
+        "id": "com-sc-1",
+        "meetingId": "meeting-sc-1",
+        "contactId": "contact-sarah-chen",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Deliver interactive Figma prototype for NexaFlow workflow designer",
+        "description": "Provide clickable Figma prototype demonstrating drag-and-drop node connections with validation badges.",
+        "dueDate": "2026-10-04",
+        "status": "open",
+        "sourceMeetingTitle": "Workflow Designer UX Review & Component Library Alignment",
+        "sourceMeetingDate": "2026-09-08"
+      }
+    ],
+    "notes": "Sarah values visual clarity and quick feedback loops. Send prototypes before code changes."
+  },
+  {
+    "id": "meeting-mv-1",
+    "contactId": "contact-marcus-vance",
+    "title": "Autonomous Ingestion Architecture & High-Throughput Bursting",
+    "scheduledAt": "2026-09-22T16:00:00Z",
+    "durationMinutes": 45,
+    "status": "completed",
+    "meetingType": "technical-review",
+    "agenda": [
+      "Review 5,000 qps burst rate limit requirements",
+      "Python SDK early access and OpenAPI specs"
+    ],
+    "summary": "Deep dive into real-time ingestion pipelines. Marcus requested direct access to raw streaming APIs and private PyPI package.",
+    "discussionTopics": [
+      "Rate limits on batch embeddings and backpressure handling",
+      "Direct socket streaming vs REST endpoint pooling"
+    ],
+    "decisions": [
+      "Grant Marcus pre-release access to Python streaming client"
+    ],
+    "followUps": [
+      "Send private PyPI credentials by end of week"
+    ],
+    "commitments": [
+      {
+        "id": "com-mv-1",
+        "meetingId": "meeting-mv-1",
+        "contactId": "contact-marcus-vance",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Send private PyPI credentials for experimental streaming SDK",
+        "description": "Provision service account token and email installation documentation for Python client.",
+        "dueDate": "2026-09-26",
+        "status": "open",
+        "sourceMeetingTitle": "Autonomous Ingestion Architecture & High-Throughput Bursting",
+        "sourceMeetingDate": "2026-09-22"
+      },
+      {
+        "id": "com-mv-2",
+        "meetingId": "meeting-mv-1",
+        "contactId": "contact-marcus-vance",
+        "owner": "contact",
+        "ownerName": "Marcus Vance",
+        "title": "Share cluster benchmark traces from DeepMind infrastructure test",
+        "description": "Provide anonymized JSON trace logs of memory allocation during 5k qps bursts.",
+        "dueDate": "2026-10-07",
+        "status": "open",
+        "sourceMeetingTitle": "Autonomous Ingestion Architecture & High-Throughput Bursting",
+        "sourceMeetingDate": "2026-09-22"
+      }
+    ],
+    "notes": "Marcus iterates rapidly. If we provide raw SDK access, he will write unit tests for us."
+  }
+]

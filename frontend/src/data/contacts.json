@@ -1,0 +1,138 @@
+[
+  {
+    "id": "contact-rahul-sharma",
+    "name": "Rahul Sharma",
+    "title": "VP of Engineering",
+    "company": "Acme Technologies",
+    "department": "Platform & Infrastructure",
+    "email": "rahul.sharma@acmetechnologies.example.com",
+    "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    "previousMeetingsCount": 5,
+    "relationshipHealth": "strong",
+    "tags": ["Strategic Account", "Enterprise Tier", "Technical Buyer", "Cloud Migration"],
+    "lastMeetingDate": "2026-09-14T14:30:00Z",
+    "nextMeetingDate": "2026-10-02T15:00:00Z",
+    "openCommitmentsCount": 3,
+    "bio": "Leads a 90-person platform engineering organization at Acme Technologies. Technical, detail-oriented, with deep distributed systems experience. Cares intensely about p99 latency, predictability, and minimal operational toil for his SRE team.",
+    "preferences": [
+      {
+        "id": "pref-1",
+        "category": "communication",
+        "text": "Prefers crisp bulleted summaries over dense slide decks.",
+        "context": "Stated explicitly in Meeting #1 and reiterated in Meeting #4."
+      },
+      {
+        "id": "pref-2",
+        "category": "scheduling",
+        "text": "Strictly avoids Friday afternoon syncs; needs agenda 24h prior.",
+        "context": "Blocked calendar repeatedly on Fridays; requests calendar invites with clear agenda bullets."
+      },
+      {
+        "id": "pref-3",
+        "category": "technical",
+        "text": "Wants exact CLI snippets and Terraform configurations, not high-level marketing claims.",
+        "context": "Prefers code snippets and reproducible benchmarks from your engineering team."
+      },
+      {
+        "id": "pref-4",
+        "category": "decision-making",
+        "text": "Begins meetings by reviewing unresolved commitments from the previous session.",
+        "context": "Observed consistently across Meetings #3, #4, and #5."
+      }
+    ],
+    "knownConcerns": [
+      {
+        "id": "concern-1",
+        "topic": "p99 Latency Spikes during Peak Traffic",
+        "description": "Anxious that database schema transitions could cause latency to breach 150ms SLA between 14:00-16:00 EST.",
+        "severity": "high",
+        "detectedInMeetingId": "meeting-5",
+        "detectedDate": "2026-09-14"
+      },
+      {
+        "id": "concern-2",
+        "topic": "CFO Budget Cap on Enterprise Licensing",
+        "description": "CFO is scrutinizing cloud infra expenditures; Rahul needs solid ROI math on node efficiency to justify contract expansion.",
+        "severity": "medium",
+        "detectedInMeetingId": "meeting-5",
+        "detectedDate": "2026-09-14"
+      },
+      {
+        "id": "concern-3",
+        "topic": "Vendor Lock-in with Custom Serialization",
+        "description": "Previously resisted proprietary binary wire formats; insists on standard OpenTelemetry and gRPC compatibility.",
+        "severity": "low",
+        "detectedInMeetingId": "meeting-2",
+        "detectedDate": "2026-06-20"
+      }
+    ]
+  },
+  {
+    "id": "contact-sarah-chen",
+    "name": "Sarah Chen",
+    "title": "Head of Product",
+    "company": "NexaFlow Systems",
+    "department": "Core Workflows",
+    "email": "sarah.chen@nexaflow.example.com",
+    "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
+    "previousMeetingsCount": 3,
+    "relationshipHealth": "neutral",
+    "tags": ["Mid-Market", "Product Expansion", "Evaluation"],
+    "lastMeetingDate": "2026-09-08T10:00:00Z",
+    "nextMeetingDate": "2026-10-06T11:00:00Z",
+    "openCommitmentsCount": 1,
+    "bio": "Drives product discovery and platform integrations for NexaFlow. Focused on developer onboarding velocity and UI configurability.",
+    "preferences": [
+      {
+        "id": "pref-sc-1",
+        "category": "communication",
+        "text": "Appreciates interactive prototypes and Figma walkthroughs.",
+        "context": "Mentioned during initial discovery sync."
+      }
+    ],
+    "knownConcerns": [
+      {
+        "id": "concern-sc-1",
+        "topic": "End-user Learning Curve",
+        "description": "Worries that non-technical managers might struggle with complex workflow setups.",
+        "severity": "medium",
+        "detectedInMeetingId": "meeting-sc-2",
+        "detectedDate": "2026-08-15"
+      }
+    ]
+  },
+  {
+    "id": "contact-marcus-vance",
+    "name": "Marcus Vance",
+    "title": "CTO & Co-founder",
+    "company": "OrbitData AI",
+    "department": "Executive",
+    "email": "marcus@orbitdata.example.com",
+    "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    "previousMeetingsCount": 2,
+    "relationshipHealth": "strong",
+    "tags": ["Startup", "High Growth", "AI Native"],
+    "lastMeetingDate": "2026-09-22T16:00:00Z",
+    "nextMeetingDate": "2026-10-10T14:00:00Z",
+    "openCommitmentsCount": 2,
+    "bio": "Former DeepMind research lead now building real-time autonomous data ingestion pipelines. Moving fast, wants beta access to experimental features.",
+    "preferences": [
+      {
+        "id": "pref-mv-1",
+        "category": "technical",
+        "text": "Wants early access to raw Python SDKs and OpenAPI specs before public release.",
+        "context": "Iterates fast and provides detailed PR feedback."
+      }
+    ],
+    "knownConcerns": [
+      {
+        "id": "concern-mv-1",
+        "topic": "Rate Limits on Batch Embeddings",
+        "description": "High throughput pipeline requires bursting to 5,000 queries per second without throttling.",
+        "severity": "high",
+        "detectedInMeetingId": "meeting-mv-2",
+        "detectedDate": "2026-09-22"
+      }
+    ]
+  }
+]
