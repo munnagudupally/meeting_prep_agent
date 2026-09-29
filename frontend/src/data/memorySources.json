@@ -1,0 +1,74 @@
+[
+  {
+    "id": "mem-1",
+    "meetingId": "meeting-5",
+    "meetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+    "meetingDate": "2026-09-14",
+    "timestampInMeeting": "18:42",
+    "tag": "Concern / SLA",
+    "contextType": "concern",
+    "excerpt": "Rahul: \"My biggest worry isn’t steady state. It’s what happens during the October database schema migration when Postgres locks tables for 30 seconds. If your agent caches stale routing paths and latency jumps past 150ms, our mobile checkouts fail.\"",
+    "whyItMatters": "Rahul's biggest fear is checkout failure during the upcoming Oct 15 Postgres schema migration. Proving your routing cache absorbs 30s table locks without breaching the 150ms SLA eliminates his primary operational blocker.",
+    "relevanceScore": 0.98
+  },
+  {
+    "id": "mem-2",
+    "meetingId": "meeting-5",
+    "meetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+    "meetingDate": "2026-09-14",
+    "timestampInMeeting": "24:10",
+    "tag": "Commitment / Due Oct 3",
+    "contextType": "commitment",
+    "excerpt": "You: \"We will benchmark our worker node throughput on AWS Graviton3 (c7g.4xlarge) compared to x86 and deliver the side-by-side memory bandwidth report before our next sync on October 2.\"",
+    "whyItMatters": "This commitment is due today. Presenting the 24% Graviton memory throughput gain directly resolves Rahul's need for hard ROI figures before he talks to the CFO.",
+    "relevanceScore": 0.96
+  },
+  {
+    "id": "mem-3",
+    "meetingId": "meeting-4",
+    "meetingTitle": "Pre-Production Load Test & SLA Finalization",
+    "meetingDate": "2026-08-30",
+    "timestampInMeeting": "32:15",
+    "tag": "Concern / Budget",
+    "contextType": "concern",
+    "excerpt": "Rahul: \"Our CFO is auditing all infrastructure line items over $100k. I need to clearly prove to him that adopting this solution reduces our total EC2 footprint rather than adding another vanity layer.\"",
+    "whyItMatters": "Acme finance leadership is scrutinizing all enterprise tooling. Rahul is your champion, but he needs defensible cost-savings metrics to protect this deal against executive budget scrutiny.",
+    "relevanceScore": 0.92
+  },
+  {
+    "id": "mem-4",
+    "meetingId": "meeting-3",
+    "meetingTitle": "Security Review & Data Governance Architecture",
+    "meetingDate": "2026-07-28",
+    "timestampInMeeting": "08:20",
+    "tag": "Preference / Communication",
+    "contextType": "preference",
+    "excerpt": "Rahul: \"Please don’t walk me through a 20-slide deck. Let’s look at the action items from last week first, then go straight into the live terminal test output.\"",
+    "whyItMatters": "Rahul has zero tolerance for fluff. Starting today's call with slide decks will frustrate him; starting with open commitments and live benchmark numbers establishes immediate credibility.",
+    "relevanceScore": 0.94
+  },
+  {
+    "id": "mem-5",
+    "meetingId": "meeting-2",
+    "meetingTitle": "PoC Review & Edge Cache Architecture Evaluation",
+    "meetingDate": "2026-06-20",
+    "timestampInMeeting": "14:05",
+    "tag": "Preference / Architecture",
+    "contextType": "preference",
+    "excerpt": "Rahul: \"We strictly avoid vendor-locked binary formats. Everything interfacing with our logging cluster must serialize into standard JSON or OpenTelemetry protobuf format.\"",
+    "whyItMatters": "Acme's platform philosophy mandates vendor-neutral telemetry. Demonstrating open JSON/OTel export prevents compliance and architecture vetoes from his platform committee.",
+    "relevanceScore": 0.88
+  },
+  {
+    "id": "mem-6",
+    "meetingId": "meeting-1",
+    "meetingTitle": "Architecture Discovery & Latency Bottleneck Exploration",
+    "meetingDate": "2026-05-15",
+    "timestampInMeeting": "38:50",
+    "tag": "Relationship Dynamic",
+    "contextType": "relationship",
+    "excerpt": "Rahul: \"I appreciate direct answers. If a feature isn’t ready or if failover adds 20ms of jitter, just tell me upfront. We can engineer around known physics, but surprises burn trust.\"",
+    "whyItMatters": "Rahul values radical candor. Being transparent about known edge cases builds long-term executive trust and cements your status as a true technical partner rather than a vendor.",
+    "relevanceScore": 0.95
+  }
+]

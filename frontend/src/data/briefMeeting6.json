@@ -1,0 +1,232 @@
+{
+  "meetingId": "meeting-6",
+  "contactId": "contact-rahul-sharma",
+  "generatedAt": "2026-10-02T08:00:00Z",
+  "relationship": {
+    "previousMeetingsCount": 5,
+    "relationshipStatus": "Strategic Partner",
+    "cadence": "Bi-weekly sync over 5 months",
+    "keyDynamic": "High trust, deeply technical relationship. Rahul respects transparent engineering trade-offs, hates marketing buzzwords, and insists on reviewing commitments first."
+  },
+  "keyContext": {
+    "openCommitments": [
+      {
+        "id": "com-m5-1",
+        "meetingId": "meeting-5",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Deliver updated SLA appendix with credit guarantees for p99 > 150ms",
+        "description": "Incorporate tiered rebate clauses for any consecutive 15-minute window exceeding 150ms p99 latency.",
+        "dueDate": "2026-10-05",
+        "status": "open",
+        "sourceMeetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+        "sourceMeetingDate": "2026-09-14"
+      },
+      {
+        "id": "com-m5-2",
+        "meetingId": "meeting-5",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Share benchmark comparisons between arm64 and x86 Graviton instances",
+        "description": "Compare memory throughput and query p99 latency between c7g.4xlarge (Graviton3) and c6i.4xlarge.",
+        "dueDate": "2026-10-03",
+        "status": "open",
+        "sourceMeetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+        "sourceMeetingDate": "2026-09-14"
+      },
+      {
+        "id": "com-m5-3",
+        "meetingId": "meeting-5",
+        "contactId": "contact-rahul-sharma",
+        "owner": "contact",
+        "ownerName": "Rahul Sharma",
+        "title": "Confirm SRE team headcount assigned to migration war room",
+        "description": "Provide list of dedicated on-call engineers for the October 15 production cutover.",
+        "dueDate": "2026-10-08",
+        "status": "open",
+        "sourceMeetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+        "sourceMeetingDate": "2026-09-14"
+      }
+    ],
+    "completedCommitments": [
+      {
+        "id": "com-m5-4",
+        "meetingId": "meeting-5",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Provide sandbox API keys for 3 junior platform engineers",
+        "description": "Delivered via encrypted vault on Sept 18.",
+        "dueDate": "2026-09-18",
+        "status": "completed",
+        "sourceMeetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+        "sourceMeetingDate": "2026-09-14"
+      },
+      {
+        "id": "com-m4-1",
+        "meetingId": "meeting-4",
+        "contactId": "contact-rahul-sharma",
+        "owner": "you",
+        "ownerName": "Your Team",
+        "title": "Document emergency rollback procedure for Terraform scripts",
+        "description": "Delivered runbook and automated rollback script on Sept 8.",
+        "dueDate": "2026-09-08",
+        "status": "completed",
+        "sourceMeetingTitle": "Pre-Production Load Test & SLA Finalization",
+        "sourceMeetingDate": "2026-08-30"
+      }
+    ],
+    "knownConcerns": [
+      {
+        "id": "concern-1",
+        "topic": "p99 Latency Spikes during Database Migration",
+        "description": "Worried that upcoming Postgres schema migration will lock tables and spike latency past 150ms.",
+        "severity": "high",
+        "detectedInMeetingId": "meeting-5",
+        "detectedDate": "2026-09-14"
+      },
+      {
+        "id": "concern-2",
+        "topic": "CFO Scrutiny on Infrastructure ROI",
+        "description": "Needs hard evidence that Graviton arm64 instances reduce cloud spend by >20% to justify annual budget signoff.",
+        "severity": "medium",
+        "detectedInMeetingId": "meeting-5",
+        "detectedDate": "2026-09-14"
+      }
+    ],
+    "preferences": [
+      {
+        "id": "pref-1",
+        "category": "communication",
+        "text": "Prefers crisp bulleted summaries and terminal metrics over slides.",
+        "context": "Stated explicitly in Meeting #1 & #4."
+      },
+      {
+        "id": "pref-4",
+        "category": "decision-making",
+        "text": "Begins meetings by reviewing open commitments first.",
+        "context": "Consistently observed across Meetings #3, #4, and #5."
+      },
+      {
+        "id": "pref-3",
+        "category": "technical",
+        "text": "Insists on exact CLI commands and config snippets for his SRE team.",
+        "context": "Observed during failover runbook delivery."
+      }
+    ],
+    "recommendedQuestions": [
+      {
+        "id": "q-1",
+        "question": "“Rahul, before we dive in, should we confirm the Graviton3 benchmark results showing 24% lower memory cost per query?”",
+        "rationale": "Directly resolves his CFO budget concern and honors his preference to review open commitments first.",
+        "linkedMemorySourceId": "mem-2"
+      },
+      {
+        "id": "q-2",
+        "question": "“For the October 15 schema migration window, would it help if we deploy an ephemeral routing buffer to absorb any 30-second Postgres locks?”",
+        "rationale": "Directly addresses his highest severity fear of p99 latency spikes during table migrations.",
+        "linkedMemorySourceId": "mem-1"
+      },
+      {
+        "id": "q-3",
+        "question": "“Has your SRE war room roster been finalized, or do we need to provide additional onboarding sessions for the 3 junior platform engineers?”",
+        "rationale": "Follows up on his open action item and leverages the sandbox keys delivered last week.",
+        "linkedMemorySourceId": "mem-4"
+      }
+    ],
+    "risksAndFollowUps": [
+      {
+        "id": "rf-1",
+        "type": "risk",
+        "title": "CFO Delay on Contract Execution",
+        "impact": "If Graviton ROI figures are not presented clearly in the first 10 minutes, contract approval may slip past Q3 close.",
+        "sourceSnippet": "Meeting #5: \"CFO is auditing all infrastructure line items over $100k.\"",
+        "suggestedAction": "Lead immediately with the 1-page financial efficiency summary."
+      },
+      {
+        "id": "rf-2",
+        "type": "follow-up",
+        "title": "Finalize SLA Credit Appendix Sign-off",
+        "impact": "SLA rebate terms must be counter-signed before legal execution.",
+        "sourceSnippet": "Meeting #5: Open commitment due Oct 5.",
+        "suggestedAction": "Walk through the 15-minute rolling window rebate table."
+      }
+    ]
+  },
+  "memorySources": [
+    {
+      "id": "mem-1",
+      "meetingId": "meeting-5",
+      "meetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+      "meetingDate": "2026-09-14",
+      "timestampInMeeting": "18:42",
+      "tag": "Concern / SLA",
+      "contextType": "concern",
+      "excerpt": "Rahul: \"My biggest worry isn’t steady state. It’s what happens during the October database schema migration when Postgres locks tables for 30 seconds. If your agent caches stale routing paths and latency jumps past 150ms, our mobile checkouts fail.\"",
+      "whyItMatters": "Rahul's biggest fear is checkout failure during the upcoming Oct 15 Postgres schema migration. Proving your routing cache absorbs 30s table locks without breaching the 150ms SLA eliminates his primary operational blocker.",
+      "relevanceScore": 0.98
+    },
+    {
+      "id": "mem-2",
+      "meetingId": "meeting-5",
+      "meetingTitle": "Q3 Architecture Review & Latency SLA Sync",
+      "meetingDate": "2026-09-14",
+      "timestampInMeeting": "24:10",
+      "tag": "Commitment / Due Oct 3",
+      "contextType": "commitment",
+      "excerpt": "You: \"We will benchmark our worker node throughput on AWS Graviton3 (c7g.4xlarge) compared to x86 and deliver the side-by-side memory bandwidth report before our next sync on October 2.\"",
+      "whyItMatters": "This commitment is due today. Presenting the 24% Graviton memory throughput gain directly resolves Rahul's need for hard ROI figures before he talks to the CFO.",
+      "relevanceScore": 0.96
+    },
+    {
+      "id": "mem-3",
+      "meetingId": "meeting-4",
+      "meetingTitle": "Pre-Production Load Test & SLA Finalization",
+      "meetingDate": "2026-08-30",
+      "timestampInMeeting": "32:15",
+      "tag": "Concern / Budget",
+      "contextType": "concern",
+      "excerpt": "Rahul: \"Our CFO is auditing all infrastructure line items over $100k. I need to clearly prove to him that adopting this solution reduces our total EC2 footprint rather than adding another vanity layer.\"",
+      "whyItMatters": "Acme finance leadership is scrutinizing all enterprise tooling. Rahul is your champion, but he needs defensible cost-savings metrics to protect this deal against executive budget scrutiny.",
+      "relevanceScore": 0.92
+    },
+    {
+      "id": "mem-4",
+      "meetingId": "meeting-3",
+      "meetingTitle": "Security Review & Data Governance Architecture",
+      "meetingDate": "2026-07-28",
+      "timestampInMeeting": "08:20",
+      "tag": "Preference / Communication",
+      "contextType": "preference",
+      "excerpt": "Rahul: \"Please don’t walk me through a 20-slide deck. Let’s look at the action items from last week first, then go straight into the live terminal test output.\"",
+      "whyItMatters": "Rahul has zero tolerance for fluff. Starting today's call with slide decks will frustrate him; starting with open commitments and live benchmark numbers establishes immediate credibility.",
+      "relevanceScore": 0.94
+    },
+    {
+      "id": "mem-5",
+      "meetingId": "meeting-2",
+      "meetingTitle": "PoC Review & Edge Cache Architecture Evaluation",
+      "meetingDate": "2026-06-20",
+      "timestampInMeeting": "14:05",
+      "tag": "Preference / Architecture",
+      "contextType": "preference",
+      "excerpt": "Rahul: \"We strictly avoid vendor-locked binary formats. Everything interfacing with our logging cluster must serialize into standard JSON or OpenTelemetry protobuf format.\"",
+      "whyItMatters": "Acme's platform philosophy mandates vendor-neutral telemetry. Demonstrating open JSON/OTel export prevents compliance and architecture vetoes from his platform committee.",
+      "relevanceScore": 0.88
+    },
+    {
+      "id": "mem-6",
+      "meetingId": "meeting-1",
+      "meetingTitle": "Architecture Discovery & Latency Bottleneck Exploration",
+      "meetingDate": "2026-05-15",
+      "timestampInMeeting": "38:50",
+      "tag": "Relationship Dynamic",
+      "contextType": "relationship",
+      "excerpt": "Rahul: \"I appreciate direct answers. If a feature isn’t ready or if failover adds 20ms of jitter, just tell me upfront. We can engineer around known physics, but surprises burn trust.\"",
+      "whyItMatters": "Rahul values radical candor. Being transparent about known edge cases builds long-term executive trust and cements your status as a true technical partner rather than a vendor.",
+      "relevanceScore": 0.95
+    }
+  ]
+}
