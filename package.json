@@ -1,0 +1,19 @@
+{
+  "name": "meeting-prep-agent",
+  "version": "1.0.0",
+  "description": "Meeting Prep Agent Monorepo",
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "build": "npm --prefix backend install",
+    "backend:install": "npm --prefix backend install",
+    "backend:start": "node backend/src/server.js",
+    "frontend:install": "npm --prefix frontend install",
+    "frontend:build": "npm --prefix frontend run build"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.4",
+    "express": "^5.2.1",
+    "firebase-admin": "^14.5.0"
+  }
+}
