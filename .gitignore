@@ -1,0 +1,21 @@
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+*.env
+
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build outputs
+dist/
+build/
+*.log
+
+# Firebase keys & credentials
+*firebase-adminsdk*.json
+serviceAccountKey.json

@@ -10,6 +10,7 @@ const userRoutes = require('./routes/userRoutes');
 const meetingRoutes = require('./routes/meetingRoutes');
 const prepRoutes = require('./routes/prepRoutes');
 const memoryRoutes = require('./routes/memoryRoutes');
+const hindsightRoutes = require('./routes/hindsightRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,6 +53,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/prep', prepRoutes);
 app.use('/api/memories', memoryRoutes);
+app.use('/api/hindsight', hindsightRoutes);
 
 // 404 Not Found Handler
 app.use((req, res, next) => {

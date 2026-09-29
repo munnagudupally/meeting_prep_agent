@@ -1,5 +1,21 @@
 import os
+from dotenv import load_dotenv
+# pyrefly: ignore [missing-import]
 from hindsight_client import Hindsight
+
+load_dotenv()
+
+api_key = os.getenv("HINDSIGHT_API_KEY")
+
+if not api_key:
+    raise RuntimeError("HINDSIGHT_API_KEY is missing")
+
+client = Hindsight(
+    base_url="https://api.hindsight.vectorize.io",
+    api_key=api_key
+)
+
+MEMORY_BANK = "meeting-prep-agent-v1"
 
 class HindsightService:
     def __init__(self):

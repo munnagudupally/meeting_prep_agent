@@ -28,6 +28,37 @@ import { EmptyState } from '../components/common/EmptyState';
 import { PageContainer } from '../components/layout/PageContainer';
 import { ApiErrorBanner } from '../components/common/ApiErrorBanner';
 
+function formatDisplayDate(val: any): string {
+  if (!val) return 'Date not specified';
+  if (val && typeof val === 'object' && ('_seconds' in val || 'seconds' in val)) {
+    const secs = val._seconds || val.seconds;
+    return new Date(secs * 1000).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+  const d = new Date(val);
+  return isNaN(d.getTime())
+    ? String(val)
+    : d.toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+}
+
+function getMeetingEpoch(val: any): number {
+  if (!val) return 0;
+  if (val && typeof val === 'object' && ('_seconds' in val || 'seconds' in val)) {
+    return (val._seconds || val.seconds) * 1000;
+  }
+  const t = new Date(val).getTime();
+  return isNaN(t) ? 0 : t;
+}
+
 export const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,17 +104,19 @@ export const DashboardPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="py-12 max-w-2xl mx-auto space-y-4">
-        <ApiErrorBanner error={error} onRetry={loadDashboardData} />
-      </div>
+      <PageContainer>
+        <div className="py-12 max-w-2xl mx-auto space-y-4">
+          <ApiErrorBanner error={error} onRetry={loadDashboardData} />
+        </div>
+      </PageContainer>
     );
   }
 
-  const primaryContact = contacts.find((c) => c.id === 'contact-rahul-sharma') || contacts[0];
-  const upcomingMeetings = meetings.filter((m) => m.status === 'upcoming');
+  const primaryContact = contacts[0] || null;
+  const upcomingMeetings = meetings.filter((m) => m.status === 'upcoming' || m.status === 'in_progress');
   const recentCompletedMeetings = meetings
     .filter((m) => m.status === 'completed')
-    .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+    .sort((a, b) => getMeetingEpoch(b.startTime || b.scheduledAt) - getMeetingEpoch(a.startTime || a.scheduledAt));
   const openCommitments = commitments.filter((c) => c.status === 'open');
 
   return (
@@ -94,26 +127,26 @@ export const DashboardPage: React.FC = () => {
           <div className="space-y-2 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Hindsight Meeting Prep Agent • Active Workspace</span>
+              <span>Meeting Prep Agent • Active Workspace</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
               Pre-Meeting Intelligence Dashboard
             </h1>
-            <p className="text-sm md:text-base text-slate-300">
+            <p className="text-sm text-slate-300">
               Grounded briefings for stakeholder syncs synthesizing previous meetings, open deliverables, known concerns, and decisions.
             </p>
           </div>
 
           {/* Quick Actions */}
           <div className="flex flex-wrap items-center gap-2.5">
-            <Link to="/meetings/meeting-6/brief">
-              <Button variant="gradient" size="md" leftIcon={<Sparkles className="w-4 h-4" />}>
-                Launch Rahul's Brief
+            <Link to="/meetings/new">
+              <Button variant="gradient" size="md" leftIcon={<CalendarPlus className="w-4 h-4" />}>
+                Schedule Meeting
               </Button>
             </Link>
-            <Link to="/meetings/new">
-              <Button variant="secondary" size="md" leftIcon={<CalendarPlus className="w-4 h-4" />}>
-                Create Meeting
+            <Link to="/memories">
+              <Button variant="secondary" size="md" leftIcon={<Brain className="w-4 h-4" />}>
+                Memory Timeline
               </Button>
             </Link>
             <Link to="/contacts">
@@ -136,7 +169,7 @@ export const DashboardPage: React.FC = () => {
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Stakeholders</p>
               <p className="text-2xl font-bold text-white mt-1">{contacts.length}</p>
               <Link to="/contacts" className="text-xs text-indigo-400 hover:text-indigo-300 mt-1 flex items-center gap-1">
-                <Users className="w-3 h-3" /> Acme Technologies tracked
+                <Users className="w-3 h-3" /> Tracked stakeholders
               </Link>
             </div>
             <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-300">
@@ -151,7 +184,7 @@ export const DashboardPage: React.FC = () => {
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Meetings</p>
               <p className="text-2xl font-bold text-white mt-1">{meetings.length}</p>
               <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-                <Clock className="w-3 h-3" /> {recentCompletedMeetings.length} completed historical
+                <Clock className="w-3 h-3" /> {recentCompletedMeetings.length} completed
               </p>
             </div>
             <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-emerald-400">
@@ -166,7 +199,7 @@ export const DashboardPage: React.FC = () => {
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Open Commitments</p>
               <p className="text-2xl font-bold text-white mt-1">{openCommitments.length}</p>
               <Link to="/commitments" className="text-xs text-amber-400 hover:text-amber-300 mt-1 flex items-center gap-1">
-                <CheckSquare className="w-3 h-3" /> View ledger
+                <CheckSquare className="w-3 h-3" /> View commitments
               </Link>
             </div>
             <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-amber-400">
@@ -179,9 +212,9 @@ export const DashboardPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Concerns</p>
-              <p className="text-2xl font-bold text-white mt-1">{primaryContact?.knownConcerns.length || 0}</p>
+              <p className="text-2xl font-bold text-white mt-1">{(primaryContact?.knownConcerns || []).length}</p>
               <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
-                <ShieldAlert className="w-3 h-3" /> p99 latency & budget ROI
+                <ShieldAlert className="w-3 h-3" /> Risk guardrails
               </p>
             </div>
             <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-rose-400">
@@ -191,9 +224,9 @@ export const DashboardPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Primary Grid Layout: Left (Upcoming & Recent Meetings), Right (Primary Demo Stakeholder & Open Commitments) */}
+      {/* Primary Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Meetings Section (Upcoming & Recent) */}
+        {/* Left Column: Upcoming & Recent Meetings */}
         <div className="lg:col-span-2 space-y-6">
           {/* Upcoming Meetings */}
           <Card
@@ -219,7 +252,9 @@ export const DashboardPage: React.FC = () => {
             ) : (
               <div className="space-y-3">
                 {upcomingMeetings.map((m) => {
-                  const meetingContact = contacts.find((c) => c.id === m.contactId);
+                  const attendeeNames = (m.attendees || []).map((a) => a.name).join(', ') || 'Stakeholder';
+                  const prepStatus = m.prepStatus || (m.prepBriefId ? 'ready' : 'pending');
+
                   return (
                     <div
                       key={m.id}
@@ -228,25 +263,21 @@ export const DashboardPage: React.FC = () => {
                       <div className="space-y-1.5 max-w-xl">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="primary" size="sm">
-                            Upcoming
+                            {m.status.toUpperCase()}
                           </Badge>
                           <span className="text-xs text-slate-300 font-mono flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5 text-indigo-400" />
-                            {new Date(m.scheduledAt).toLocaleDateString(undefined, {
-                              weekday: 'short',
-                              month: 'short',
-                              day: 'numeric'
-                            })} • {m.durationMinutes} min
+                            {formatDisplayDate(m.startTime || m.scheduledAt)}
                           </span>
-                          <Badge variant="outline" size="sm">
-                            {m.meetingType}
+                          <Badge variant={prepStatus === 'ready' ? 'purple' : 'slate'} size="sm">
+                            {prepStatus === 'ready' ? 'Brief Ready' : 'Brief Pending'}
                           </Badge>
                         </div>
                         <h4 className="text-sm font-bold text-white">{m.title}</h4>
                         <p className="text-xs text-slate-400">
                           Stakeholder:{' '}
                           <span className="text-slate-200 font-medium">
-                            {meetingContact ? `${meetingContact.name} (${meetingContact.company})` : 'Unknown'}
+                            {attendeeNames}
                           </span>
                         </p>
                       </div>
@@ -257,9 +288,9 @@ export const DashboardPage: React.FC = () => {
                             View Brief
                           </Button>
                         </Link>
-                        <Link to={`/meetings/${m.id}/post-meeting`}>
+                        <Link to={`/meetings/${m.id}`}>
                           <Button variant="outline" size="sm">
-                            Post-Meeting
+                            Details
                           </Button>
                         </Link>
                       </div>
@@ -276,9 +307,9 @@ export const DashboardPage: React.FC = () => {
             subtitle="Previous stakeholder discussions and logged decisions"
             icon={<Clock className="w-4 h-4" />}
             action={
-              <Link to="/meetings">
+              <Link to="/meetings?status=completed">
                 <Button variant="ghost" size="xs" rightIcon={<ArrowRight className="w-3.5 h-3.5" />}>
-                  All History
+                  All Completed
                 </Button>
               </Link>
             }
@@ -290,124 +321,114 @@ export const DashboardPage: React.FC = () => {
               />
             ) : (
               <div className="space-y-3">
-                {recentCompletedMeetings.slice(0, 3).map((m, idx) => {
-                  return (
-                    <div
-                      key={m.id}
-                      className="p-4 rounded-xl bg-slate-950/40 border border-slate-800/80 hover:border-slate-700 transition-all space-y-2.5"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-mono font-bold text-indigo-400">
-                            Sync #{recentCompletedMeetings.length - idx}
-                          </span>
-                          <Badge variant="success" size="sm">
-                            Completed
-                          </Badge>
-                          <span className="text-xs text-slate-400">
-                            {new Date(m.scheduledAt).toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Link to={`/meetings/${m.id}/brief`}>
-                            <Button variant="ghost" size="xs" leftIcon={<Sparkles className="w-3 h-3 text-indigo-400" />}>
-                              Brief
-                            </Button>
-                          </Link>
-                          <Link to={`/meetings/${m.id}/post-meeting`}>
-                            <Button variant="ghost" size="xs">
-                              Debrief
-                            </Button>
-                          </Link>
-                        </div>
+                {recentCompletedMeetings.slice(0, 3).map((m, idx) => (
+                  <div
+                    key={m.id}
+                    className="p-4 rounded-xl bg-slate-950/40 border border-slate-800/80 hover:border-slate-700 transition-all space-y-2.5"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-mono font-bold text-indigo-400">
+                          Sync #{recentCompletedMeetings.length - idx}
+                        </span>
+                        <Badge variant="success" size="sm">
+                          Completed
+                        </Badge>
+                        <span className="text-xs text-slate-400">
+                          {formatDisplayDate(m.startTime || m.scheduledAt)}
+                        </span>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Link to={`/meetings/${m.id}/brief`}>
+                          <Button variant="ghost" size="xs" leftIcon={<Sparkles className="w-3 h-3 text-indigo-400" />}>
+                            Brief
+                          </Button>
+                        </Link>
+                        <Link to={`/meetings/${m.id}/post-meeting`}>
+                          <Button variant="ghost" size="xs">
+                            Debrief
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
 
-                      <h4 className="text-sm font-semibold text-white">{m.title}</h4>
+                    <h4 className="text-sm font-semibold text-white">{m.title}</h4>
+                    {m.summary && (
                       <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
                         {m.summary}
                       </p>
-
-                      {m.decisions && m.decisions.length > 0 && (
-                        <div className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/70 text-xs">
-                          <span className="text-[10px] uppercase font-mono text-emerald-400 font-semibold block mb-1">
-                            Key Consensus:
-                          </span>
-                          <p className="text-slate-200 line-clamp-1">✓ {m.decisions[0]}</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </Card>
         </div>
 
-        {/* Right Column: Featured Demo Target & Open Commitments */}
+        {/* Right Column: Featured Stakeholder & Open Commitments */}
         <div className="space-y-6">
-          {/* Primary Stakeholder Card */}
+          {/* Featured Stakeholder Card */}
           <Card
             title={
               <span className="flex items-center gap-2">
                 <span>Featured Stakeholder</span>
-                <Badge variant="primary" size="sm">Primary</Badge>
+                <Badge variant="primary" size="sm">Active</Badge>
               </span>
             }
-            subtitle="Rahul Sharma • VP of Engineering at Acme"
+            subtitle={primaryContact ? `${primaryContact.name} • ${primaryContact.company}` : 'No stakeholders registered'}
             icon={<Brain className="w-4 h-4" />}
             action={
-              <Link to="/contacts/contact-rahul-sharma">
-                <Button variant="ghost" size="xs" rightIcon={<ExternalLink className="w-3 h-3" />}>
-                  Profile
-                </Button>
-              </Link>
+              primaryContact ? (
+                <Link to={`/contacts/${primaryContact.id}`}>
+                  <Button variant="ghost" size="xs" rightIcon={<ExternalLink className="w-3 h-3" />}>
+                    Profile
+                  </Button>
+                </Link>
+              ) : undefined
             }
           >
-            {primaryContact && (
+            {primaryContact ? (
               <div className="space-y-3.5">
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800">
-                  <img
-                    src={primaryContact.avatarUrl}
-                    alt={primaryContact.name}
-                    className="w-12 h-12 rounded-xl object-cover ring-2 ring-indigo-500/40"
-                  />
+                  {primaryContact.avatarUrl ? (
+                    <img
+                      src={primaryContact.avatarUrl}
+                      alt={primaryContact.name}
+                      className="w-12 h-12 rounded-xl object-cover ring-2 ring-indigo-500/40"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 flex items-center justify-center font-bold text-base">
+                      {primaryContact.name[0].toUpperCase()}
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <h4 className="text-sm font-bold text-white truncate">{primaryContact.name}</h4>
-                    <p className="text-xs text-slate-400 truncate">{primaryContact.title}</p>
-                    <p className="text-xs text-indigo-400 font-medium truncate">{primaryContact.company}</p>
+                    <p className="text-xs text-slate-400 truncate">{primaryContact.title || 'Stakeholder'}</p>
+                    <p className="text-xs text-indigo-400 font-medium truncate">{primaryContact.company || 'Enterprise'}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-center text-xs">
                   <div className="p-2 rounded-lg bg-slate-950/40 border border-slate-800">
                     <span className="text-[10px] text-slate-400 uppercase block">Meetings</span>
-                    <span className="font-bold text-white">{primaryContact.previousMeetingsCount}</span>
+                    <span className="font-bold text-white">{primaryContact.previousMeetingsCount || 1}</span>
                   </div>
                   <div className="p-2 rounded-lg bg-slate-950/40 border border-slate-800">
-                    <span className="text-[10px] text-slate-400 uppercase block">Open Items</span>
-                    <span className="font-bold text-amber-400">{primaryContact.openCommitmentsCount}</span>
+                    <span className="text-[10px] text-slate-400 uppercase block">Open Tasks</span>
+                    <span className="font-bold text-amber-400">{primaryContact.openCommitmentsCount || 0}</span>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800 text-xs space-y-1">
-                  <span className="text-[10px] uppercase font-mono text-indigo-400 font-semibold block">
-                    Observed Dynamic:
-                  </span>
-                  <p className="text-slate-300 leading-relaxed line-clamp-2">
-                    Values concise bullet summaries over slides. Begins syncs by reviewing open action items.
-                  </p>
-                </div>
-
-                <Link to="/meetings/meeting-6/brief" className="block">
-                  <Button variant="gradient" size="sm" className="w-full" leftIcon={<Sparkles className="w-3.5 h-3.5" />}>
-                    Open Meeting Briefing
+                <Link to="/meetings/new" className="block">
+                  <Button variant="gradient" size="sm" className="w-full" leftIcon={<CalendarPlus className="w-3.5 h-3.5" />}>
+                    Schedule Stakeholder Sync
                   </Button>
                 </Link>
               </div>
+            ) : (
+              <p className="text-xs text-slate-400 text-center py-4">
+                Schedule a meeting to link your first stakeholder profile.
+              </p>
             )}
           </Card>
 
@@ -425,7 +446,7 @@ export const DashboardPage: React.FC = () => {
             }
           >
             {openCommitments.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-4">No open commitments.</p>
+              <p className="text-xs text-slate-400 text-center py-4">No open commitments recorded.</p>
             ) : (
               <div className="space-y-2.5">
                 {openCommitments.slice(0, 4).map((com) => (
@@ -435,14 +456,14 @@ export const DashboardPage: React.FC = () => {
                   >
                     <div className="flex items-center justify-between">
                       <Badge variant={com.owner === 'you' ? 'primary' : 'warning'} size="sm">
-                        {com.owner === 'you' ? 'You' : 'Rahul'}
+                        {com.ownerName || 'Action Item'}
                       </Badge>
                       <span className="text-[10px] text-slate-400 font-mono">Due {com.dueDate}</span>
                     </div>
                     <p className="text-slate-200 font-medium leading-snug line-clamp-2">{com.title}</p>
                     <div className="pt-1 flex items-center justify-between">
                       <span className="text-[10px] text-slate-500 truncate max-w-[140px]">
-                        {com.sourceMeetingTitle}
+                        {com.sourceMeetingTitle || 'Meeting Action'}
                       </span>
                       <button
                         onClick={() => handleToggleCommitment(com.id, com.status)}

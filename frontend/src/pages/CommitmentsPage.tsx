@@ -157,7 +157,7 @@ export const CommitmentsPage: React.FC = () => {
         const q = searchQuery.toLowerCase();
         const matchesTitle = c.title.toLowerCase().includes(q);
         const matchesDesc = (c.description || '').toLowerCase().includes(q);
-        const matchesMeeting = c.sourceMeetingTitle.toLowerCase().includes(q);
+        const matchesMeeting = (c.sourceMeetingTitle || '').toLowerCase().includes(q);
         const matchesOwner = c.ownerName.toLowerCase().includes(q);
         return matchesTitle || matchesDesc || matchesMeeting || matchesOwner;
       }

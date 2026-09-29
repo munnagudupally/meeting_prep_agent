@@ -1,55 +1,66 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
+import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { ContactDetailsPage } from './pages/ContactDetailsPage';
 import { MeetingHistoryPage } from './pages/MeetingHistoryPage';
 import { MeetingCreatePage } from './pages/MeetingCreatePage';
+import { MeetingDetailsPage } from './pages/MeetingDetailsPage';
 import { MeetingBriefPage } from './pages/MeetingBriefPage';
 import { MemoryTimelinePage } from './pages/MemoryTimelinePage';
 import { CommitmentsPage } from './pages/CommitmentsPage';
 import { PostMeetingPage } from './pages/PostMeetingPage';
+import { AccountPage } from './pages/AccountPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 export const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<AppLayout />}>
-          {/* 1. Dashboard */}
-          <Route index element={<DashboardPage />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Login Route */}
+          <Route path="/login" element={<LoginPage />} />
 
-          {/* 2. Contacts */}
-          <Route path="contacts" element={<ContactsPage />} />
+          {/* Protected Application Routes */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            {/* Root redirects to Dashboard */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
 
-          {/* 3. Contact Details */}
-          <Route path="contacts/:id" element={<ContactDetailsPage />} />
+            {/* Meetings & Prep Flow */}
+            <Route path="/meetings" element={<MeetingHistoryPage />} />
+            <Route path="/meetings/new" element={<MeetingCreatePage />} />
+            <Route path="/meetings/:id" element={<MeetingDetailsPage />} />
+            <Route path="/meetings/:id/brief" element={<MeetingBriefPage />} />
+            <Route path="/meetings/:id/post-meeting" element={<PostMeetingPage />} />
 
-          {/* 4. Meeting History */}
-          <Route path="meetings" element={<MeetingHistoryPage />} />
+            {/* Contacts & Memories Flow */}
+            <Route path="/contacts" element={<ContactsPage />} />
+            <Route path="/contacts/:id" element={<ContactDetailsPage />} />
+            <Route path="/memories" element={<MemoryTimelinePage />} />
+            <Route path="/timeline" element={<Navigate to="/memories" replace />} />
+            <Route path="/commitments" element={<CommitmentsPage />} />
 
-          {/* 5. Meeting Creation */}
-          <Route path="meetings/new" element={<MeetingCreatePage />} />
+            {/* Account & Profile */}
+            <Route path="/account" element={<AccountPage />} />
 
-          {/* 6. Meeting Brief (Most Important Screen) */}
-          <Route path="meetings/:id/brief" element={<MeetingBriefPage />} />
-
-          {/* 7. Memory Timeline */}
-          <Route path="timeline" element={<MemoryTimelinePage />} />
-
-          {/* 8. Commitment UI */}
-          <Route path="commitments" element={<CommitmentsPage />} />
-
-          {/* 9. Post-Meeting Input */}
-          <Route path="meetings/:id/post-meeting" element={<PostMeetingPage />} />
-
-          {/* Catch-all */}
-          <Route path="404" element={<NotFoundPage />} />
-          <Route path="*" element={<Navigate to="/404" replace />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+            {/* 404 Fallback */}
+            <Route path="/404" element={<NotFoundPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 

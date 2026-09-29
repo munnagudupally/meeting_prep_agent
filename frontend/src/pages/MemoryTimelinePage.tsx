@@ -1,586 +1,486 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   Clock,
-  Calendar,
-  Sparkles,
-  ShieldAlert,
-  Sliders,
-  CheckSquare,
   Search,
-  CheckCircle2,
-  ExternalLink,
-  ChevronDown,
-  ChevronUp,
-  ArrowUpDown,
-  Filter,
   Users,
-  Lightbulb,
-  CalendarDays
+  Plus,
+  Trash2,
+  BrainCircuit,
+  RefreshCw,
+  Tag
 } from 'lucide-react';
-import { apiService } from '../services/apiService';
-import type { TimelineEvent, TimelineEventType, Contact } from '../types';
+import { getMemories, createMemory, deleteMemory } from '../services';
+import type { Memory } from '../types';
 import { Card } from '../components/common/Card';
 import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { PageContainer } from '../components/layout/PageContainer';
+import { EmptyState } from '../components/common/EmptyState';
+
+function formatDisplayDate(val: any): string {
+  if (!val) return 'Date not specified';
+  if (val && typeof val === 'object' && ('_seconds' in val || 'seconds' in val)) {
+    const secs = val._seconds || val.seconds;
+    return new Date(secs * 1000).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? String(val) : d.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+}
 
 export const MemoryTimelinePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialContactId = searchParams.get('contactId') || 'all';
+  const categoryParam = searchParams.get('category') || 'all';
 
   const [loading, setLoading] = useState(true);
-  const [events, setEvents] = useState<TimelineEvent[]>([]);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [selectedContactId, setSelectedContactId] = useState<string>(initialContactId);
-  const [selectedType, setSelectedType] = useState<string>('all');
+  const [memories, setMemories] = useState<Memory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>(categoryParam);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
-  const [expandedEventIds, setExpandedEventIds] = useState<Record<string, boolean>>({});
+
+  // Create Memory Modal Form state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [newAttendeeName, setNewAttendeeName] = useState('');
+  const [newAttendeeEmail, setNewAttendeeEmail] = useState('');
+  const [newCategory, setNewCategory] = useState('rapport');
+  const [newSentiment, setNewSentiment] = useState<'positive' | 'neutral' | 'cautious'>('neutral');
+  const [newNote, setNewNote] = useState('');
+  const [newTags, setNewTags] = useState('');
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const mems = await getMemories();
+      setMemories(mems);
+    } catch (err) {
+      console.error('Failed to load memory timeline', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
+    loadData();
+  }, []);
+
+  const handleCategoryChange = (cat: string) => {
+    setSelectedCategory(cat);
+    if (cat === 'all') {
+      searchParams.delete('category');
+    } else {
+      searchParams.set('category', cat);
+    }
+    setSearchParams(searchParams);
+  };
+
+  const handleCreateMemory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newNote.trim()) return;
+
+    try {
+      setCreating(true);
+      const tagsArray = newTags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      const created = await createMemory({
+        attendeeName: newAttendeeName.trim(),
+        attendeeEmail: newAttendeeEmail.trim(),
+        category: newCategory,
+        sentiment: newSentiment,
+        note: newNote.trim(),
+        tags: tagsArray
+      });
+
+      setMemories((prev) => [created, ...prev]);
+      setIsCreateModalOpen(false);
+
+      // Reset form
+      setNewAttendeeName('');
+      setNewAttendeeEmail('');
+      setNewCategory('rapport');
+      setNewSentiment('neutral');
+      setNewNote('');
+      setNewTags('');
+    } catch (err: unknown) {
+      console.error('Failed to create memory', err);
+      alert(err instanceof Error ? err.message : 'Failed to save memory');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteMemory = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this memory entry?')) {
       try {
-        setLoading(true);
-        const [contactList, timelineEvents] = await Promise.all([
-          apiService.getContacts(),
-          apiService.getTimelineEvents(selectedContactId === 'all' ? undefined : selectedContactId)
-        ]);
-        setContacts(contactList);
-        setEvents(timelineEvents);
-      } catch (err) {
-        console.error('Failed to load memory timeline', err);
+        setDeletingId(id);
+        await deleteMemory(id);
+        setMemories((prev) => prev.filter((m) => m.id !== id));
+      } catch (err: unknown) {
+        console.error('Failed to delete memory', err);
+        alert(err instanceof Error ? err.message : 'Failed to delete memory');
       } finally {
-        setLoading(false);
+        setDeletingId(null);
       }
     }
-    loadData();
-  }, [selectedContactId]);
-
-  // Sync contact filter with URL
-  const handleContactChange = (newContactId: string) => {
-    setSelectedContactId(newContactId);
-    if (newContactId === 'all') {
-      searchParams.delete('contactId');
-      setSearchParams(searchParams);
-    } else {
-      setSearchParams({ contactId: newContactId });
-    }
-  };
-
-  const toggleEventExpanded = (id: string) => {
-    setExpandedEventIds((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
-  // Mock interaction to toggle commitment completion from timeline
-  const handleToggleCommitment = async (commitmentId: string, currentStatus?: string) => {
-    const nextStatus = currentStatus === 'completed' ? 'open' : 'completed';
-    await apiService.updateCommitmentStatus(commitmentId, nextStatus);
-
-    // Optimistically update timeline events state
-    setEvents((prev) =>
-      prev.map((evt) => {
-        if (evt.details?.commitmentId === commitmentId) {
-          return {
-            ...evt,
-            badgeText: nextStatus === 'completed' ? 'Commitment Fulfilled' : 'Commitment Promised',
-            badgeVariant: nextStatus === 'completed' ? 'success' : 'warning',
-            details: {
-              ...evt.details,
-              status: nextStatus
-            }
-          };
-        }
-        return evt;
-      })
-    );
   };
 
   if (loading) {
-    return <LoadingSpinner message="Reconstructing chronological memory timeline & interaction history..." fullHeight />;
+    return <LoadingSpinner message="Reconstructing chronological Hindsight memory repository..." fullHeight />;
   }
 
-  // Filter events
-  const filteredEvents = events
-    .filter((evt) => {
-      // Type filter
-      if (selectedType !== 'all' && evt.type !== selectedType) return false;
-
-      // Search query filter
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchesTitle = evt.title.toLowerCase().includes(q);
-        const matchesDesc = (evt.description || '').toLowerCase().includes(q);
-        const matchesSummary = (evt.summary || '').toLowerCase().includes(q);
-        const matchesContact = evt.contactName.toLowerCase().includes(q) || evt.contactCompany.toLowerCase().includes(q);
-        const matchesMeeting = (evt.meetingTitle || '').toLowerCase().includes(q);
-        return matchesTitle || matchesDesc || matchesSummary || matchesContact || matchesMeeting;
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      const timeA = new Date(a.date).getTime();
-      const timeB = new Date(b.date).getTime();
-      return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
-    });
-
-  // Calculate event type counts
-  const typeCounts = {
-    all: events.length,
-    meeting: events.filter((e) => e.type === 'meeting').length,
-    fact: events.filter((e) => e.type === 'fact').length,
-    concern: events.filter((e) => e.type === 'concern').length,
-    preference: events.filter((e) => e.type === 'preference').length,
-    commitment: events.filter((e) => e.type === 'commitment').length
-  };
-
-  // Group events by Month/Year for clean reading
-  const groupedEvents: { [monthYear: string]: TimelineEvent[] } = {};
-  filteredEvents.forEach((evt) => {
-    const d = new Date(evt.date);
-    const monthYear = d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-    if (!groupedEvents[monthYear]) {
-      groupedEvents[monthYear] = [];
+  // Filter logic
+  const filteredMemories = memories.filter((m) => {
+    if (selectedCategory !== 'all' && m.category !== selectedCategory) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const noteMatch = m.note.toLowerCase().includes(q);
+      const nameMatch = (m.attendeeName || '').toLowerCase().includes(q);
+      const emailMatch = (m.attendeeEmail || '').toLowerCase().includes(q);
+      const tagMatch = (m.tags || []).some((t) => t.toLowerCase().includes(q));
+      if (!noteMatch && !nameMatch && !emailMatch && !tagMatch) return false;
     }
-    groupedEvents[monthYear].push(evt);
+    return true;
   });
 
-  const getEventIcon = (type: TimelineEventType) => {
-    switch (type) {
-      case 'meeting':
-        return <Calendar className="w-4 h-4 text-indigo-400" />;
-      case 'fact':
-        return <Sparkles className="w-4 h-4 text-purple-400" />;
-      case 'concern':
-        return <ShieldAlert className="w-4 h-4 text-rose-400" />;
-      case 'preference':
-        return <Sliders className="w-4 h-4 text-sky-400" />;
-      case 'commitment':
-        return <CheckSquare className="w-4 h-4 text-emerald-400" />;
-      default:
-        return <Clock className="w-4 h-4 text-indigo-400" />;
-    }
-  };
-
-  const getEventNodeColor = (type: TimelineEventType) => {
-    switch (type) {
-      case 'meeting':
-        return 'border-indigo-500 bg-indigo-950 text-indigo-400 shadow-indigo-500/20';
-      case 'fact':
-        return 'border-purple-500 bg-purple-950 text-purple-400 shadow-purple-500/20';
-      case 'concern':
-        return 'border-rose-500 bg-rose-950 text-rose-400 shadow-rose-500/20';
-      case 'preference':
-        return 'border-sky-500 bg-sky-950 text-sky-400 shadow-sky-500/20';
-      case 'commitment':
-        return 'border-emerald-500 bg-emerald-950 text-emerald-400 shadow-emerald-500/20';
-      default:
-        return 'border-slate-500 bg-slate-900 text-slate-400 shadow-slate-500/20';
-    }
-  };
-
   return (
-    <div className="space-y-6 pb-20">
-      {/* 1. HEADER & INTERACTION INTELLIGENCE STATS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-800">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-              <Clock className="w-6 h-6" />
+    <PageContainer>
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Top Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold mb-1">
+              <BrainCircuit className="w-3.5 h-3.5" />
+              <span>Hindsight Memory Repository</span>
             </div>
-            <span>Memory Timeline & Interaction History</span>
-          </h1>
-          <p className="text-sm text-slate-300 mt-1 max-w-2xl">
-            Longitudinal chronological memory log synthesizing meeting summaries, remembered facts, stakeholder preferences, known concerns, and commitment transitions.
-          </p>
-        </div>
-
-        {/* Quick dossier jump */}
-        <div className="flex items-center gap-2">
-          <Link to="/meetings/meeting-6/brief">
-            <Button variant="secondary" size="sm" leftIcon={<Sparkles className="w-3.5 h-3.5 text-indigo-400" />}>
-              Meeting Brief
-            </Button>
-          </Link>
-          <Link to="/commitments">
-            <Button variant="secondary" size="sm" leftIcon={<CheckSquare className="w-3.5 h-3.5 text-emerald-400" />}>
-              Commitments
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* 2. STATS OVERVIEW MATRIX */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
-          <span className="text-[11px] font-mono text-slate-400 uppercase tracking-wider block">
-            Interactions Logged
-          </span>
-          <span className="text-2xl font-extrabold text-white font-mono">{events.length}</span>
-          <span className="text-[11px] text-slate-400 block">Across 5+ months</span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
-          <span className="text-[11px] font-mono text-indigo-400 uppercase tracking-wider block">
-            Meeting Summaries
-          </span>
-          <span className="text-2xl font-extrabold text-indigo-300 font-mono">{typeCounts.meeting}</span>
-          <span className="text-[11px] text-slate-400 block">Agendas & decisions</span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
-          <span className="text-[11px] font-mono text-purple-400 uppercase tracking-wider block">
-            Remembered Facts
-          </span>
-          <span className="text-2xl font-extrabold text-purple-300 font-mono">{typeCounts.fact}</span>
-          <span className="text-[11px] text-slate-400 block">Grounded quotes</span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
-          <span className="text-[11px] font-mono text-emerald-400 uppercase tracking-wider block">
-            Commitment Events
-          </span>
-          <span className="text-2xl font-extrabold text-emerald-300 font-mono">{typeCounts.commitment}</span>
-          <span className="text-[11px] text-slate-400 block">Promised & fulfilled</span>
-        </div>
-      </div>
-
-      {/* 3. TOOLBAR: CONTACT SELECTOR, EVENT TYPE FILTERS, SEARCH, SORT */}
-      <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3.5 shadow-md">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          {/* Contact Filter */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <Users className="w-3.5 h-3.5 text-indigo-400" /> Filter Contact:
-            </span>
-            <select
-              value={selectedContactId}
-              onChange={(e) => handleContactChange(e.target.value)}
-              className="px-3 py-1.5 bg-slate-950 border border-slate-700/80 rounded-xl text-xs font-medium text-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
-            >
-              <option value="all">All Contacts ({contacts.length})</option>
-              {contacts.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} • {c.company}
-                </option>
-              ))}
-            </select>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Cross-Meeting Memory Timeline</h1>
+            <p className="text-xs text-slate-400">
+              Persistent memory logs capturing stakeholder dynamics, commitments, preferences, and relationship nuances.
+            </p>
           </div>
 
-          {/* Search Input & Sort Order Toggle */}
-          <div className="flex items-center gap-2.5">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search memories, facts, quotes..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700/80 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              />
-            </div>
-
-            <button
-              onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-700/80 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
-              title="Toggle sort order"
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadData}
+              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
             >
-              <ArrowUpDown className="w-3.5 h-3.5 text-indigo-400" />
-              <span>{sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}</span>
-            </button>
+              Refresh
+            </Button>
+
+            <Button
+              variant="gradient"
+              size="sm"
+              onClick={() => setIsCreateModalOpen(true)}
+              leftIcon={<Plus className="w-4 h-4" />}
+            >
+              Record Memory
+            </Button>
           </div>
         </div>
 
-        {/* Event Type Filter Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1">
-          <span className="text-xs font-semibold text-slate-400 flex items-center gap-1 shrink-0">
-            <Filter className="w-3.5 h-3.5" /> Event Types:
-          </span>
+        {/* Search & Category Filter Bar */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-900/80 border border-slate-800 p-3 rounded-2xl">
+          {/* Search Box */}
+          <div className="relative flex-1 w-full">
+            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search memories by stakeholder, keywords, or tags..."
+              className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none transition-colors"
+            />
+          </div>
 
-          {[
-            { id: 'all', label: 'All Events', count: typeCounts.all },
-            { id: 'meeting', label: 'Meeting Summaries', count: typeCounts.meeting },
-            { id: 'fact', label: 'Remembered Facts', count: typeCounts.fact },
-            { id: 'concern', label: 'Concerns', count: typeCounts.concern },
-            { id: 'preference', label: 'Preferences', count: typeCounts.preference },
-            { id: 'commitment', label: 'Commitment Changes', count: typeCounts.commitment }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setSelectedType(tab.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-                selectedType === tab.id
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                  : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span className="text-[10px] font-mono opacity-80">({tab.count})</span>
-            </button>
-          ))}
+          {/* Category Tabs */}
+          <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto p-1 bg-slate-950 rounded-xl border border-slate-800/80 shrink-0">
+            {['all', 'rapport', 'commitment', 'decision', 'concern', 'preference', 'general'].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => handleCategoryChange(cat)}
+                className={`px-3 py-1 rounded-lg text-xs font-medium capitalize transition-colors cursor-pointer ${
+                  selectedCategory === cat
+                    ? 'bg-indigo-600 text-white font-semibold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* 4. CHRONOLOGICAL TIMELINE STREAM */}
-      {filteredEvents.length === 0 ? (
-        <div className="text-center py-20 rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
-          <Clock className="w-10 h-10 text-slate-600 mx-auto" />
-          <h3 className="text-base font-bold text-white">No Timeline Events Match</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Try adjusting your search keywords or switching the event type filter back to all events.
-          </p>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setSelectedType('all');
-              setSearchQuery('');
-            }}
-          >
-            Reset Filters
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-10">
-          {Object.entries(groupedEvents).map(([monthYear, monthEvents]) => (
-            <div key={monthYear} className="space-y-4">
-              {/* Month Group Header Sticky Flag */}
-              <div className="flex items-center gap-3 sticky top-16 z-20 bg-slate-950/90 backdrop-blur-sm py-2">
-                <span className="flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-indigo-400 bg-indigo-950/60 px-3 py-1 rounded-lg border border-indigo-800/50 shadow-sm">
-                  <CalendarDays className="w-3.5 h-3.5" />
-                  {monthYear}
-                </span>
-                <div className="h-px flex-1 bg-gradient-to-r from-indigo-900/60 to-transparent" />
-                <span className="text-[11px] font-mono text-slate-500">
-                  {monthEvents.length} events
-                </span>
-              </div>
+        {/* Memories Timeline View */}
+        {filteredMemories.length === 0 ? (
+          <Card className="p-12 text-center">
+            <EmptyState
+              icon={<BrainCircuit className="w-8 h-8 text-slate-500" />}
+              title={
+                searchQuery || selectedCategory !== 'all'
+                  ? 'No matching memories found'
+                  : 'No memories recorded yet'
+              }
+              description={
+                searchQuery || selectedCategory !== 'all'
+                  ? 'Try clearing your search query or selecting a different category.'
+                  : 'Record memories manually or complete a post-meeting debrief to populate Hindsight intelligence.'
+              }
+              actionText={
+                searchQuery || selectedCategory !== 'all' ? 'Clear Filters' : 'Record First Memory'
+              }
+              onAction={
+                searchQuery || selectedCategory !== 'all'
+                  ? () => {
+                      setSearchQuery('');
+                      handleCategoryChange('all');
+                    }
+                  : () => setIsCreateModalOpen(true)
+              }
+            />
+          </Card>
+        ) : (
+          <div className="relative border-l border-slate-800 ml-4 md:ml-6 pl-6 md:pl-8 space-y-6">
+            {filteredMemories.map((mem) => {
+              const badgeVariant =
+                mem.category === 'commitment'
+                  ? 'purple'
+                  : mem.category === 'concern'
+                  ? 'rose'
+                  : mem.category === 'decision'
+                  ? 'emerald'
+                  : mem.category === 'preference'
+                  ? 'amber'
+                  : 'indigo';
 
-              {/* Month Timeline Items */}
-              <div className="relative border-l-2 border-indigo-900/40 ml-4 sm:ml-6 pl-6 sm:pl-8 space-y-5">
-                {monthEvents.map((evt) => {
-                  const isExpanded = !!expandedEventIds[evt.id];
-                  const hasExpandableDetails =
-                    evt.type === 'meeting' &&
-                    ((evt.details?.decisions && evt.details.decisions.length > 0) ||
-                      (evt.details?.discussionTopics && evt.details.discussionTopics.length > 0) ||
-                      (evt.details?.agenda && evt.details.agenda.length > 0));
+              const isDeleting = deletingId === mem.id;
 
-                  return (
-                    <div key={evt.id} className="relative group">
-                      {/* Timeline Node Dot */}
-                      <div
-                        className={`absolute -left-[35px] sm:-left-[43px] top-4 w-7 h-7 rounded-full border-2 flex items-center justify-center shadow-md transition-transform group-hover:scale-110 z-10 ${getEventNodeColor(
-                          evt.type
-                        )}`}
-                      >
-                        {getEventIcon(evt.type)}
+              return (
+                <div key={mem.id} className="relative group">
+                  {/* Timeline dot */}
+                  <div className="absolute -left-[31px] md:-left-[39px] top-4 w-4 h-4 rounded-full bg-slate-950 border-2 border-indigo-500 ring-4 ring-slate-950" />
+
+                  <Card className="p-5 hover:border-slate-700 transition-all space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={badgeVariant} size="sm">
+                          {mem.category.toUpperCase()}
+                        </Badge>
+
+                        {mem.sentiment && (
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                              mem.sentiment === 'positive'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : mem.sentiment === 'cautious'
+                                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                : 'bg-slate-800 text-slate-400 border border-slate-700'
+                            }`}
+                          >
+                            {mem.sentiment.toUpperCase()}
+                          </span>
+                        )}
+
+                        <span className="text-xs text-slate-400 font-mono flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-slate-500" />
+                          {formatDisplayDate(mem.createdAt)}
+                        </span>
                       </div>
 
-                      {/* Event Card */}
-                      <Card className="hover:border-slate-700/80 transition-all bg-slate-900/90 shadow-lg">
-                        <div className="space-y-3">
-                          {/* Card Header: Badges & Date */}
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge variant={evt.badgeVariant} size="sm">
-                                {evt.badgeText}
-                              </Badge>
-
-                              <span className="text-xs font-semibold text-slate-300 flex items-center gap-1">
-                                <Users className="w-3 h-3 text-slate-400" />
-                                <Link
-                                  to={`/contacts/${evt.contactId}`}
-                                  className="hover:text-indigo-400 hover:underline transition-colors"
-                                >
-                                  {evt.contactName}
-                                </Link>
-                                <span className="text-slate-500 font-normal">({evt.contactCompany})</span>
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-                              <span className="bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                                {evt.date}
-                              </span>
-                              {evt.timestamp && (
-                                <span className="text-slate-500">• {evt.timestamp}</span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Event Title */}
-                          <div className="flex items-start justify-between gap-3">
-                            <h3 className="text-sm md:text-base font-bold text-white tracking-tight leading-snug">
-                              {evt.title}
-                            </h3>
-
-                            {evt.meetingId && (
-                              <Link
-                                to={`/meetings/${evt.meetingId}/brief`}
-                                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1 shrink-0 bg-indigo-950/30 px-2 py-1 rounded-lg border border-indigo-800/40"
-                                title="Open meeting brief dossier"
-                              >
-                                <span>Brief</span>
-                                <ExternalLink className="w-3 h-3" />
-                              </Link>
-                            )}
-                          </div>
-
-                          {/* Event Description / Summary */}
-                          {(evt.summary || evt.description) && (
-                            <p className="text-xs text-slate-300 leading-relaxed font-sans">
-                              {evt.summary || evt.description}
-                            </p>
-                          )}
-
-                          {/* TYPE-SPECIFIC CALLOUTS */}
-
-                          {/* 1. Remembered Fact Quote & Why It Matters */}
-                          {evt.type === 'fact' && evt.details && (
-                            <div className="space-y-2 pt-1">
-                              {evt.details.whyItMatters && (
-                                <div className="p-3 rounded-xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-slate-950 border border-purple-800/40 text-xs text-purple-200 space-y-1">
-                                  <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10px] text-purple-400 font-mono">
-                                    <Lightbulb className="w-3.5 h-3.5 text-purple-400" />
-                                    <span>Why It Matters:</span>
-                                  </div>
-                                  <p className="leading-relaxed text-slate-200">
-                                    {evt.details.whyItMatters}
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* 2. Concern Callout */}
-                          {evt.type === 'concern' && evt.details && (
-                            <div className="p-3 rounded-xl bg-rose-950/20 border border-rose-900/40 text-xs space-y-1 text-rose-200">
-                              <span className="font-mono text-[10px] uppercase font-bold text-rose-400 tracking-wider block">
-                                Severity: {evt.details.severity?.toUpperCase()} RISK
-                              </span>
-                              <p className="text-slate-300 leading-relaxed">
-                                {evt.details.whyItMatters}
-                              </p>
-                            </div>
-                          )}
-
-                          {/* 3. Preference Callout */}
-                          {evt.type === 'preference' && evt.details && (
-                            <div className="p-2.5 rounded-lg bg-sky-950/20 border border-sky-900/40 text-xs text-sky-200 font-mono">
-                              Category: {evt.details.category?.toUpperCase()}
-                            </div>
-                          )}
-
-                          {/* 4. Commitment Interactive Checkbox */}
-                          {evt.type === 'commitment' && evt.details && (
-                            <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-semibold text-slate-200">
-                                    Owner: {evt.details.owner}
-                                  </span>
-                                  <span className="text-[10px] font-mono text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-900/50">
-                                    Due: {evt.details.dueDate}
-                                  </span>
-                                </div>
-                                <span className="text-[11px] text-slate-400 font-mono block">
-                                  Status: {evt.details.status?.toUpperCase()}
-                                </span>
-                              </div>
-
-                              <button
-                                onClick={() =>
-                                  handleToggleCommitment(
-                                    evt.details!.commitmentId!,
-                                    evt.details!.status
-                                  )
-                                }
-                                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shadow-sm ${
-                                  evt.details.status === 'completed'
-                                    ? 'bg-emerald-950 border border-emerald-700 text-emerald-300 hover:bg-emerald-900/80'
-                                    : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'
-                                }`}
-                              >
-                                <CheckCircle2 className="w-4 h-4" />
-                                <span>
-                                  {evt.details.status === 'completed'
-                                    ? 'Completed (Click to Re-open)'
-                                    : 'Mark as Fulfilled'}
-                                </span>
-                              </button>
-                            </div>
-                          )}
-
-                          {/* Expandable Meeting Details */}
-                          {hasExpandableDetails && (
-                            <div className="pt-2 border-t border-slate-800/80">
-                              <button
-                                onClick={() => toggleEventExpanded(evt.id)}
-                                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                <span>{isExpanded ? 'Hide' : 'View'} Decisions & Agenda Topics</span>
-                                {isExpanded ? (
-                                  <ChevronUp className="w-3.5 h-3.5" />
-                                ) : (
-                                  <ChevronDown className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-
-                              {isExpanded && (
-                                <div className="mt-3 p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3 animate-in fade-in duration-200">
-                                  {evt.details?.decisions && evt.details.decisions.length > 0 && (
-                                    <div className="space-y-1.5">
-                                      <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-400 font-bold block">
-                                        Decisions Agreed:
-                                      </span>
-                                      <ul className="space-y-1">
-                                        {evt.details.decisions.map((dec, idx) => (
-                                          <li
-                                            key={idx}
-                                            className="text-xs text-slate-200 flex items-start gap-1.5"
-                                          >
-                                            <span className="text-emerald-400 font-bold">•</span>
-                                            <span>{dec}</span>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  )}
-
-                                  {evt.details?.discussionTopics && evt.details.discussionTopics.length > 0 && (
-                                    <div className="space-y-1.5 pt-1">
-                                      <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold block">
-                                        Topics Discussed:
-                                      </span>
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {evt.details.discussionTopics.map((topic, idx) => (
-                                          <span
-                                            key={idx}
-                                            className="text-[11px] bg-slate-900 text-slate-300 px-2 py-0.5 rounded-md border border-slate-800"
-                                          >
-                                            {topic}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </Card>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMemory(mem.id)}
+                        disabled={isDeleting}
+                        className="text-slate-400 hover:text-rose-400 p-1 transition-colors self-end sm:self-auto cursor-pointer"
+                        title="Delete memory"
+                      >
+                        <Trash2 className={`w-3.5 h-3.5 ${isDeleting ? 'animate-spin' : ''}`} />
+                      </button>
                     </div>
-                  );
-                })}
+
+                    <p className="text-sm text-slate-200 leading-relaxed font-normal">
+                      {mem.note}
+                    </p>
+
+                    {/* Metadata footer */}
+                    <div className="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400">
+                      {(mem.attendeeName || mem.attendeeEmail) && (
+                        <div className="flex items-center gap-1.5 text-indigo-300">
+                          <Users className="w-3.5 h-3.5" />
+                          <span>
+                            {mem.attendeeName || 'Stakeholder'}{' '}
+                            {mem.attendeeEmail ? `(${mem.attendeeEmail})` : ''}
+                          </span>
+                        </div>
+                      )}
+
+                      {mem.tags && mem.tags.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {mem.tags.map((t, idx) => (
+                            <span
+                              key={idx}
+                              className="text-[10px] px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-400 flex items-center gap-1"
+                            >
+                              <Tag className="w-2.5 h-2.5" />
+                              {t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Record Memory Modal */}
+        {isCreateModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <BrainCircuit className="w-5 h-5 text-indigo-400" />
+                  <h2 className="text-base font-bold text-white">Record New Hindsight Memory</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="text-slate-400 hover:text-white"
+                >
+                  ✕
+                </button>
               </div>
+
+              <form onSubmit={handleCreateMemory} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Stakeholder Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newAttendeeName}
+                      onChange={(e) => setNewAttendeeName(e.target.value)}
+                      placeholder="e.g. Rahul Sharma"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Stakeholder Email
+                    </label>
+                    <input
+                      type="email"
+                      value={newAttendeeEmail}
+                      onChange={(e) => setNewAttendeeEmail(e.target.value)}
+                      placeholder="rahul@acme.com"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Category *
+                    </label>
+                    <select
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                    >
+                      <option value="rapport">Rapport & Background</option>
+                      <option value="commitment">Commitment / Promise</option>
+                      <option value="decision">Key Decision</option>
+                      <option value="concern">Known Concern</option>
+                      <option value="preference">Stakeholder Preference</option>
+                      <option value="general">General Note</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Sentiment
+                    </label>
+                    <select
+                      value={newSentiment}
+                      onChange={(e) => setNewSentiment(e.target.value as any)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer"
+                    >
+                      <option value="positive">Positive / Enthusiastic</option>
+                      <option value="neutral">Neutral / Informational</option>
+                      <option value="cautious">Cautious / Risk Point</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Memory Note *
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder="Enter the observation, commitment, or insight to remember for future prep..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Tags (Comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={newTags}
+                    onChange={(e) => setNewTags(e.target.value)}
+                    placeholder="latency, SLA, budget, security"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setIsCreateModalOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="gradient"
+                    size="sm"
+                    disabled={creating}
+                    leftIcon={<Plus className="w-4 h-4" />}
+                  >
+                    {creating ? 'Saving Memory...' : 'Save Memory'}
+                  </Button>
+                </div>
+              </form>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </div>
+    </PageContainer>
   );
 };
-
-export default MemoryTimelinePage;

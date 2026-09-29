@@ -1,16 +1,16 @@
 /**
- * Configuration and error abstractions for Phase 8: Real Backend API Integration
+ * Centralized API configuration and error handling for Meeting Prep Agent
  */
 
 export type ApiMode = 'mock' | 'real';
 
-const STORAGE_KEY_API_MODE = 'hindsight_api_mode';
-const STORAGE_KEY_API_BASE_URL = 'hindsight_api_base_url';
+const STORAGE_KEY_API_MODE = 'meeting_prep_api_mode';
+const STORAGE_KEY_API_BASE_URL = 'meeting_prep_api_base_url';
 
-// Default backend API URL. Can be overridden by Vite environment variable or localStorage.
+// Default backend API URL. Reads from Vite environment variable or defaults to port 5000
 export const DEFAULT_API_BASE_URL =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
-  'http://localhost:8000';
+  'http://localhost:5000';
 
 type Listener = () => void;
 const listeners: Set<Listener> = new Set();
@@ -58,11 +58,12 @@ export class ApiError extends Error {
   }
 }
 
-let inMemoryMode: ApiMode = 'mock';
+// Default mode is 'real' per architecture requirements
+let inMemoryMode: ApiMode = 'real';
 let inMemoryBaseUrl: string = DEFAULT_API_BASE_URL;
 
 /**
- * Get current API mode ('mock' | 'real')
+ * Get current API mode ('mock' | 'real') - Defaults to 'real'
  */
 export function getApiMode(): ApiMode {
   try {
@@ -129,7 +130,7 @@ export function setApiBaseUrl(url: string): void {
  * Reset API configuration to defaults
  */
 export function resetApiConfig(): void {
-  inMemoryMode = 'mock';
+  inMemoryMode = 'real';
   inMemoryBaseUrl = DEFAULT_API_BASE_URL;
   try {
     if (typeof localStorage !== 'undefined') {

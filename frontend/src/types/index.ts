@@ -1,3 +1,28 @@
+export interface UserPreferences {
+  briefingStyle: 'concise' | 'detailed' | 'bullet-points';
+  defaultMeetingDuration: number;
+  emailNotifications: boolean;
+}
+
+export interface UserProfile {
+  id: string;
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  preferences: UserPreferences;
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export interface MeetingAttendee {
+  name: string;
+  email: string;
+  company?: string;
+  role?: string;
+  linkedinUrl?: string;
+}
+
 export interface ContactPreference {
   id: string;
   category: 'communication' | 'decision-making' | 'technical' | 'scheduling';
@@ -36,25 +61,25 @@ export interface Contact {
 export interface Commitment {
   id: string;
   meetingId: string;
-  contactId: string;
+  contactId?: string;
   owner: 'you' | 'contact' | 'team';
   ownerName: string;
   title: string;
   description: string;
   dueDate: string;
   status: 'open' | 'completed' | 'in-progress' | 'blocked';
-  sourceMeetingTitle: string;
-  sourceMeetingDate: string;
+  sourceMeetingTitle?: string;
+  sourceMeetingDate?: string;
 }
 
 export interface MemorySource {
   id: string;
-  meetingId: string;
+  meetingId?: string;
   meetingTitle: string;
   meetingDate: string;
   excerpt: string;
-  contextType: 'commitment' | 'concern' | 'preference' | 'decision' | 'relationship';
-  relevanceScore: number; // e.g. 0.95
+  contextType?: 'commitment' | 'concern' | 'preference' | 'decision' | 'relationship';
+  relevanceScore?: number;
   timestampInMeeting?: string;
   tag: string;
   whyItMatters?: string;
@@ -76,44 +101,64 @@ export interface RiskOrFollowUp {
   suggestedAction: string;
 }
 
-export interface MeetingBrief {
-  meetingId: string;
-  contactId: string;
-  generatedAt: string;
-  relationship: {
-    previousMeetingsCount: number;
-    relationshipStatus: 'Strategic Partner' | 'Growing Trust' | 'Needs Attention';
-    cadence: string;
-    keyDynamic: string;
-  };
-  keyContext: {
-    openCommitments: Commitment[];
-    completedCommitments: Commitment[];
-    knownConcerns: KnownConcern[];
-    preferences: ContactPreference[];
-    recommendedQuestions: RecommendedQuestion[];
-    risksAndFollowUps: RiskOrFollowUp[];
-  };
-  memorySources: MemorySource[];
+export interface AttendeeProfile {
+  name: string;
+  email: string;
+  company?: string;
+  role?: string;
+  linkedinUrl?: string;
+  background?: string;
+  recentNews?: string;
+  pastInteractionsSummary?: string;
 }
 
-// Alias for backwards compatibility
+export interface HindsightInsight {
+  topic: string;
+  insight: string;
+  relevance: string;
+}
+
+export interface MeetingBrief {
+  id?: string;
+  meetingId: string;
+  userId?: string;
+  summary: string;
+  objectives?: string[];
+  attendeeProfiles?: AttendeeProfile[];
+  keyTalkingPoints?: string[];
+  recommendedQuestions?: any;
+  potentialRisks?: string[];
+  hindsightInsights?: HindsightInsight[];
+  customNotes?: string;
+  briefingStyle?: string;
+  version?: number;
+  createdAt?: any;
+  updatedAt?: any;
+
+  // Mock / backward compatibility fields
+  contactId?: string;
+  generatedAt?: string;
+  relationship?: any;
+  keyContext?: any;
+  memorySources?: any;
+}
+
 export type MeetingBriefData = MeetingBrief;
 
 export interface PostMeetingInput {
-  rawNotes: string;
+  rawNotes?: string;
   summary?: string;
-  discussionTopics: string[];
-  decisions: string[];
+  discussionTopics?: string[];
+  decisions?: string[];
   followUps?: string[];
-  newCommitments: Array<{
+  newCommitments?: Array<{
     title: string;
     owner: 'you' | 'contact' | 'team';
     ownerName: string;
     dueDate: string;
     description?: string;
   }>;
-  newConcerns: Array<{
+  newConcerns?: Array<{
     topic: string;
     description: string;
     severity: 'low' | 'medium' | 'high';
@@ -131,18 +176,25 @@ export interface PostMeetingInput {
   nextMeetingDate?: string;
 }
 
-// Alias for backwards compatibility
 export type PostMeetingInputPayload = PostMeetingInput;
 
 export interface Meeting {
   id: string;
-  contactId: string;
+  userId?: string;
+  contactId?: string;
   title: string;
-  scheduledAt: string;
-  durationMinutes: number;
-  status: 'upcoming' | 'completed' | 'cancelled';
-  meetingType: '1-on-1' | 'executive-sync' | 'technical-review' | 'vendor-evaluation' | 'catch-up';
-  agenda: string[];
+  description?: string;
+  startTime?: any;
+  endTime?: any;
+  scheduledAt?: string;
+  durationMinutes?: number;
+  location?: string;
+  attendees?: MeetingAttendee[];
+  status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled';
+  prepStatus?: 'pending' | 'generating' | 'ready' | 'failed';
+  prepBriefId?: string | null;
+  meetingType?: '1-on-1' | 'executive-sync' | 'technical-review' | 'vendor-evaluation' | 'catch-up';
+  agenda?: string[];
   summary?: string;
   discussionTopics?: string[];
   decisions?: string[];
@@ -151,32 +203,65 @@ export interface Meeting {
   notes?: string;
   postMeetingInput?: PostMeetingInput;
   brief?: MeetingBrief;
+  createdAt?: any;
+  updatedAt?: any;
 }
 
 export interface CreateMeetingPayload {
-  contactId: string;
   title: string;
-  scheduledAt: string;
-  durationMinutes: number;
-  meetingType: '1-on-1' | 'executive-sync' | 'technical-review' | 'vendor-evaluation' | 'catch-up';
-  agenda: string[];
+  description?: string;
+  startTime?: string;
+  endTime?: string | null;
+  location?: string;
+  attendees?: MeetingAttendee[];
+  status?: 'upcoming' | 'in_progress' | 'completed' | 'cancelled';
+  // Mock compatibility
+  contactId?: string;
+  scheduledAt?: string;
+  durationMinutes?: number;
+  meetingType?: '1-on-1' | 'executive-sync' | 'technical-review' | 'vendor-evaluation' | 'catch-up';
+  agenda?: string[];
   notes?: string;
 }
 
 export interface CreateCommitmentPayload {
   meetingId: string;
-  contactId: string;
+  contactId?: string;
   owner: 'you' | 'contact' | 'team';
   ownerName: string;
   title: string;
   description: string;
   dueDate: string;
   status: 'open' | 'completed' | 'in-progress' | 'blocked';
-  sourceMeetingTitle: string;
-  sourceMeetingDate: string;
+  sourceMeetingTitle?: string;
+  sourceMeetingDate?: string;
 }
 
-export type TimelineEventType = 'meeting' | 'fact' | 'concern' | 'preference' | 'commitment';
+export interface Memory {
+  id: string;
+  userId?: string;
+  attendeeEmail: string;
+  attendeeName: string;
+  meetingId?: string;
+  category: string;
+  note: string;
+  sentiment: 'positive' | 'neutral' | 'cautious';
+  tags: string[];
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export interface CreateMemoryPayload {
+  attendeeEmail?: string;
+  attendeeName?: string;
+  meetingId?: string;
+  category?: string;
+  note: string;
+  sentiment?: 'positive' | 'neutral' | 'cautious';
+  tags?: string[];
+}
+
+export type TimelineEventType = 'meeting' | 'fact' | 'concern' | 'preference' | 'commitment' | 'memory';
 
 export interface TimelineEvent {
   id: string;
@@ -186,9 +271,9 @@ export interface TimelineEvent {
   title: string;
   description?: string;
   summary?: string;
-  contactId: string;
-  contactName: string;
-  contactCompany: string;
+  contactId?: string;
+  contactName?: string;
+  contactCompany?: string;
   meetingId?: string;
   meetingTitle?: string;
   badgeText: string;
@@ -207,6 +292,7 @@ export interface TimelineEvent {
     relevanceScore?: number;
     context?: string;
     commitmentId?: string;
+    sentiment?: string;
+    note?: string;
   };
 }
-

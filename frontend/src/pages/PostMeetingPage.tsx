@@ -40,81 +40,26 @@ export const PostMeetingPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [completedSuccess, setCompletedSuccess] = useState(false);
 
-  // Form states initialized with realistic demo debrief data for instant evaluation
-  const [summary, setSummary] = useState(
-    'Executive sync with Rahul Sharma: Graviton3 memory benchmarks verified 24% lower query latency and 22% reduced node cost, unlocking verbal CFO approval for the annual enterprise rollout on October 15.'
-  );
-
-  const [rawNotes, setRawNotes] = useState(
-    'Met with Rahul Sharma for 30 minutes. Successfully reviewed the Graviton3 memory benchmarks showing a 24% reduction in query latency and 22% lower node cost. Rahul was impressed and confirmed his CFO gave verbal approval for the annual tier. He requested that our SRE leads join a shared Slack Connect channel ahead of the October 15 rollout. Also noted that their security team requires EU-West data residency guarantees before Q1.'
-  );
-
-  const [discussionTopics, setDiscussionTopics] = useState<string[]>([
-    'Graviton3 benchmark presentation & 24% latency reduction',
-    'SLA appendix terms & 15-minute rolling rebate tiers',
-    'October 15 US-East production rollout milestones',
-    'EU-West data residency requirements for Q1 expansion'
-  ]);
+  // Form states initialized cleanly
+  const [summary, setSummary] = useState('');
+  const [rawNotes, setRawNotes] = useState('');
+  const [discussionTopics, setDiscussionTopics] = useState<string[]>([]);
   const [newTopicText, setNewTopicText] = useState('');
 
-  const [decisions, setDecisions] = useState<string[]>([
-    'Approved annual enterprise contract term sheet with 150ms p99 SLA',
-    'October 15 US-East rollout confirmed as primary launch target',
-    'Agreed to establish dedicated SRE Slack Connect war room'
-  ]);
+  const [decisions, setDecisions] = useState<string[]>([]);
   const [newDecisionText, setNewDecisionText] = useState('');
 
   const [newCommitments, setNewCommitments] = useState<
-    PostMeetingInput['newCommitments']
-  >([
-    {
-      title: 'Send countersigned contract DocuSign envelope to Rahul & CFO',
-      owner: 'you',
-      ownerName: 'Your Team',
-      dueDate: '2026-10-04',
-      description: 'Include 15-minute rolling window rebate appendix.'
-    },
-    {
-      title: 'Deliver dedicated Slack Connect channel for SRE cutover team',
-      owner: 'you',
-      ownerName: 'Your Team',
-      dueDate: '2026-10-05',
-      description: 'Invite Acme SRE leads (Priya Desai & infrastructure leads).'
-    },
-    {
-      title: 'Provide signed war room on-call roster for Oct 15 cutover',
-      owner: 'contact',
-      ownerName: 'Rahul Sharma',
-      dueDate: '2026-10-08',
-      description: 'Acme SRE on-call engineers assigned to US-East switchover.'
-    }
-  ]);
+    NonNullable<PostMeetingInput['newCommitments']>
+  >([]);
 
   const [newConcerns, setNewConcerns] = useState<
-    PostMeetingInput['newConcerns']
-  >([
-    {
-      topic: 'EU-West Data Residency & Compliance Timeline',
-      description:
-        'Acme European banking clients require localized storage guarantees before expanding past US-East.',
-      severity: 'medium'
-    }
-  ]);
+    NonNullable<PostMeetingInput['newConcerns']>
+  >([]);
 
   const [newPreferences, setNewPreferences] = useState<
     NonNullable<PostMeetingInput['newPreferences']>
-  >([
-    {
-      category: 'communication',
-      text: 'Prefers direct Slack Connect alerts for deployment updates rather than formal email syncs',
-      context: 'Requested dedicated Slack channel for October 15 cutover team'
-    },
-    {
-      category: 'technical',
-      text: 'Requires reproducible Grafana dashboards alongside any benchmark reports',
-      context: 'Emphasized during meeting that Acme SREs verify all latency claims independently'
-    }
-  ]);
+  >([]);
 
   const [newFacts, setNewFacts] = useState<
     NonNullable<PostMeetingInput['newFacts']>
@@ -141,8 +86,13 @@ export const PostMeetingPage: React.FC = () => {
         const m = await apiService.getMeeting(id);
         if (m) {
           setMeeting(m);
-          const c = await apiService.getContact(m.contactId);
-          setContact(c);
+          const stakeholderNames = (m.attendees || []).map((a) => a.name).filter(Boolean).join(', ');
+          setSummary(`Executive debrief for "${m.title}" with ${stakeholderNames || 'stakeholders'}.`);
+          setRawNotes(`Key takeaways, decisions, and action items agreed upon during "${m.title}".`);
+          if (m.contactId) {
+            const c = await apiService.getContact(m.contactId);
+            setContact(c);
+          }
         }
 
         const all = await apiService.getAllMeetings();
@@ -217,7 +167,7 @@ export const PostMeetingPage: React.FC = () => {
 
   const handleUpdateCommitment = (
     index: number,
-    field: keyof PostMeetingInput['newCommitments'][0],
+    field: string,
     value: string
   ) => {
     const updated = [...newCommitments];
@@ -232,7 +182,7 @@ export const PostMeetingPage: React.FC = () => {
         updated[index].ownerName = 'Joint / Team';
       }
     } else {
-      (updated[index] as Record<string, unknown>)[field] = value;
+      (updated[index] as any)[field] = value;
     }
     setNewCommitments(updated);
   };
@@ -255,11 +205,11 @@ export const PostMeetingPage: React.FC = () => {
 
   const handleUpdateConcern = (
     index: number,
-    field: keyof PostMeetingInput['newConcerns'][0],
+    field: string,
     value: string
   ) => {
     const updated = [...newConcerns];
-    (updated[index] as Record<string, unknown>)[field] = value;
+    (updated[index] as any)[field] = value;
     setNewConcerns(updated);
   };
 
@@ -719,7 +669,15 @@ export const PostMeetingPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-300">
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950/70 border border-slate-800">
                 <Calendar className="w-3.5 h-3.5 text-indigo-400" />
-                <span>{new Date(meeting.scheduledAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                <span>
+                  {meeting.scheduledAt || meeting.startTime
+                    ? new Date(
+                        typeof meeting.startTime === 'object' && meeting.startTime?._seconds
+                          ? meeting.startTime._seconds * 1000
+                          : meeting.scheduledAt || meeting.startTime
+                      ).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+                    : 'Session'}
+                </span>
               </div>
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-950/70 border border-slate-800">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />

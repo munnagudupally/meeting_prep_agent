@@ -1,4 +1,5 @@
 const meetingRepository = require('../repositories/meetingRepository');
+const hindsightService = require('../services/hindsightService');
 const { FieldValue } = require('../config/firebase');
 const { Timestamp } = require('firebase-admin/firestore');
 
@@ -71,6 +72,7 @@ async function createMeeting(req, res, next) {
       title,
       description = '',
       startTime,
+      scheduledAt,
       endTime,
       location = '',
       attendees = [],
@@ -84,18 +86,19 @@ async function createMeeting(req, res, next) {
       validationErrors.push('title is required and must be a non-empty string');
     }
 
-    // StartTime validation
-    const parsedStart = parseValidDate(startTime);
+    // StartTime validation (supports startTime or scheduledAt)
+    const rawStart = startTime || scheduledAt;
+    const parsedStart = parseValidDate(rawStart);
     if (!parsedStart) {
-      validationErrors.push('startTime must be a valid ISO date string');
+      validationErrors.push('startTime is required and must be a valid date string');
     }
 
     // EndTime validation
     let parsedEnd = null;
-    if (endTime) {
-      parsedEnd = parseValidDate(endTime);
+    if (endTime && typeof endTime === 'string' && endTime.trim()) {
+      parsedEnd = parseValidDate(endTime.trim());
       if (!parsedEnd) {
-        validationErrors.push('endTime must be a valid ISO date string');
+        validationErrors.push('endTime must be a valid date string');
       } else if (parsedStart && parsedEnd.getTime() <= parsedStart.getTime()) {
         validationErrors.push('endTime must be after startTime');
       }
@@ -110,9 +113,21 @@ async function createMeeting(req, res, next) {
     const sanitizedAttendees = validateAttendees(attendees, validationErrors);
 
     if (validationErrors.length > 0) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[Validation Error] POST /api/meetings failed validation:', {
+          errors: validationErrors,
+          receivedKeys: Object.keys(req.body),
+          title: typeof title,
+          startTime: rawStart,
+          endTime,
+          attendeesCount: Array.isArray(attendees) ? attendees.length : typeof attendees
+        });
+      }
+
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
+        message: validationErrors.join('; '),
         details: validationErrors
       });
     }
@@ -133,6 +148,11 @@ async function createMeeting(req, res, next) {
     };
 
     const createdMeeting = await meetingRepository.createMeeting(meetingPayload);
+
+    // Asynchronously retain meeting context in Hindsight (non-blocking)
+    hindsightService.retainMeetingContext(createdMeeting, req.user).catch((err) => {
+      console.warn('[Hindsight] Async retain meeting failed (non-blocking):', err.message);
+    });
 
     return res.status(201).json({
       success: true,

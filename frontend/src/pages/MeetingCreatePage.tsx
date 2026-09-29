@@ -1,378 +1,456 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   CalendarPlus,
   Sparkles,
   ArrowRight,
-  ArrowLeft,
   CheckCircle2,
-  Calendar,
-  User
+  Users,
+  Plus,
+  Trash2,
+  FileText
 } from 'lucide-react';
-import {
-  getContacts,
-  createMeeting,
-  prepareMeeting
-} from '../services';
-import type { Contact, Meeting, CreateMeetingPayload } from '../types';
+import { createMeeting, prepareMeeting } from '../services';
+import type { Meeting, MeetingAttendee } from '../types';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { PageContainer } from '../components/layout/PageContainer';
-import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
 export const MeetingCreatePage: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const preselectedContactId = searchParams.get('contactId');
 
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loadingContacts, setLoadingContacts] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [preparingBrief, setPreparingBrief] = useState(false);
-
-  // Success state with the newly created meeting
-  const [createdMeeting, setCreatedMeeting] = useState<Meeting | null>(null);
-
-  // Default date: 3 days from now at 14:00
-  const defaultDateTime = () => {
-    const d = new Date();
-    d.setDate(d.getDate() + 3);
-    d.setHours(14, 0, 0, 0);
-    return d.toISOString().slice(0, 16);
+  // Helper to format Date into YYYY-MM-DDTHH:mm in local time
+  const toLocalISO = (d: Date) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const min = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
   };
 
-  const [formData, setFormData] = useState({
-    contactId: preselectedContactId || 'contact-rahul-sharma',
-    title: 'Q4 Production Cutover & SRE War Room Alignment',
-    scheduledAt: defaultDateTime(),
-    durationMinutes: 30,
-    meetingType: 'executive-sync' as CreateMeetingPayload['meetingType'],
-    agendaText: 'Confirm SRE team on-call war room roster\nReview latency guardrails and Graviton memory benchmarks\nFinalize emergency rollback procedures',
-    notes: 'Rahul indicated in Meeting #5 that CFO approval is locked. Needs concrete rollback runbooks before cutover.'
-  });
+  // Default start date: tomorrow at 10:00
+  const defaultStart = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(10, 0, 0, 0);
+    return toLocalISO(d);
+  };
 
-  useEffect(() => {
-    async function loadContacts() {
-      try {
-        setLoadingContacts(true);
-        const list = await getContacts();
-        setContacts(list);
-        if (preselectedContactId && list.some((c) => c.id === preselectedContactId)) {
-          setFormData((prev) => ({ ...prev, contactId: preselectedContactId }));
-        }
-      } catch (err) {
-        console.error('Failed to load contacts for meeting creation', err);
-      } finally {
-        setLoadingContacts(false);
-      }
+  // Default end date: tomorrow at 10:45
+  const defaultEnd = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(10, 45, 0, 0);
+    return toLocalISO(d);
+  };
+
+  const [title, setTitle] = useState('Product Roadmap Alignment & Architecture Review');
+  const [description, setDescription] = useState(
+    'Review Q4 deliverables, discuss AI prep pipeline integrations, and confirm timeline milestones with lead stakeholders.'
+  );
+  const [startTime, setStartTime] = useState(defaultStart());
+  const [endTime, setEndTime] = useState(defaultEnd());
+  const [location, setLocation] = useState('https://meet.google.com/xyz-meeting-prep');
+  const [status, setStatus] = useState<'upcoming' | 'in_progress' | 'completed'>('upcoming');
+
+  const [attendees, setAttendees] = useState<MeetingAttendee[]>([
+    {
+      name: 'Sarah Jenkins',
+      email: 'sarah.jenkins@techcorp.io',
+      company: 'TechCorp Enterprise',
+      role: 'VP of Engineering',
+      linkedinUrl: 'https://linkedin.com/in/sarahjenkins'
     }
-    loadContacts();
-  }, [preselectedContactId]);
+  ]);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [preparingBrief, setPreparingBrief] = useState(false);
+  const [createdMeeting, setCreatedMeeting] = useState<Meeting | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleAddAttendee = () => {
+    setAttendees([
+      ...attendees,
+      { name: '', email: '', company: '', role: '', linkedinUrl: '' }
+    ]);
+  };
+
+  const handleRemoveAttendee = (index: number) => {
+    setAttendees(attendees.filter((_, i) => i !== index));
+  };
+
+  const handleAttendeeChange = (index: number, field: keyof MeetingAttendee, value: string) => {
+    const updated = [...attendees];
+    updated[index] = { ...updated[index], [field]: value };
+    setAttendees(updated);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     try {
-      const payload: CreateMeetingPayload = {
-        contactId: formData.contactId,
-        title: formData.title.trim(),
-        scheduledAt: new Date(formData.scheduledAt).toISOString(),
-        durationMinutes: Number(formData.durationMinutes),
-        meetingType: formData.meetingType,
-        agenda: formData.agendaText
-          .split('\n')
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0),
-        notes: formData.notes.trim()
-      };
+      setSubmitting(true);
+      setErrorMessage(null);
 
-      const newMeeting = await createMeeting(payload);
+      if (!title.trim()) {
+        throw new Error('Meeting title is required.');
+      }
+
+      const startDate = new Date(startTime);
+      if (isNaN(startDate.getTime())) {
+        throw new Error('Please specify a valid start date and time.');
+      }
+
+      let endDateISO: string | null = null;
+      if (endTime && endTime.trim()) {
+        const endDate = new Date(endTime);
+        if (isNaN(endDate.getTime())) {
+          throw new Error('Please specify a valid end date and time.');
+        }
+        if (endDate.getTime() <= startDate.getTime()) {
+          throw new Error('End time must be after the meeting start time.');
+        }
+        endDateISO = endDate.toISOString();
+      }
+
+      // Filter valid attendees and clean empty fields
+      const validAttendees = attendees
+        .filter((a) => (a.name && a.name.trim()) || (a.email && a.email.trim()))
+        .map((a) => ({
+          name: a.name.trim() || 'Participant',
+          email: a.email.trim().toLowerCase(),
+          company: a.company?.trim() || '',
+          role: a.role?.trim() || '',
+          linkedinUrl: a.linkedinUrl?.trim() || ''
+        }));
+
+      const newMeeting = await createMeeting({
+        title: title.trim(),
+        description: description.trim(),
+        startTime: startDate.toISOString(),
+        endTime: endDateISO,
+        location: location.trim(),
+        attendees: validAttendees,
+        status
+      });
+
       setCreatedMeeting(newMeeting);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to create meeting', err);
-      alert('Error creating meeting. Please try again.');
+      setErrorMessage(err instanceof Error ? err.message : 'Error creating meeting.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handlePrepareMeeting = async () => {
+  const handleGenerateBrief = async () => {
     if (!createdMeeting) return;
     try {
       setPreparingBrief(true);
       await prepareMeeting(createdMeeting.id);
       navigate(`/meetings/${createdMeeting.id}/brief`);
-    } catch (err) {
-      console.error('Failed to prepare meeting brief', err);
-      alert('Error preparing meeting brief.');
+    } catch (err: unknown) {
+      console.error('Failed to generate brief', err);
+      alert(err instanceof Error ? err.message : 'Failed to generate brief');
     } finally {
       setPreparingBrief(false);
     }
   };
 
-  if (loadingContacts) {
-    return <LoadingSpinner message="Preparing meeting creation workspace..." fullHeight />;
-  }
+  return (
+    <PageContainer>
+      <div className="max-w-3xl mx-auto space-y-6">
+        {/* Breadcrumb Header */}
+        <div className="flex items-center gap-2 text-xs text-slate-400">
+          <Link to="/meetings" className="hover:text-slate-200 transition-colors">
+            Meetings
+          </Link>
+          <ArrowRight className="w-3 h-3 text-slate-600" />
+          <span className="text-indigo-400 font-semibold">Schedule New Meeting</span>
+        </div>
 
-  const selectedContact = contacts.find((c) => c.id === formData.contactId);
+        {/* Success Banner if meeting was just created */}
+        {createdMeeting ? (
+          <Card className="p-8 text-center space-y-6 bg-slate-900/90 border-emerald-500/40">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 mx-auto flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
 
-  // Success Confirmation Screen
-  if (createdMeeting) {
-    const contactForCreated = contacts.find((c) => c.id === createdMeeting.contactId);
-    return (
-      <PageContainer maxWidth="2xl">
-        <div className="py-8 text-center space-y-6">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 mx-auto flex items-center justify-center">
-            <CheckCircle2 className="w-9 h-9" />
-          </div>
+            <div className="space-y-2 max-w-lg mx-auto">
+              <Badge variant="emerald" size="md">
+                Meeting Saved to Firestore
+              </Badge>
+              <h2 className="text-xl font-bold text-white">{createdMeeting.title}</h2>
+              <p className="text-xs text-slate-400">
+                Scheduled for {new Date(startTime).toLocaleString()} with{' '}
+                {createdMeeting.attendees?.length || 0} stakeholder(s).
+              </p>
+            </div>
 
-          <div className="space-y-2">
-            <Badge variant="success" size="md">
-              Meeting Created Successfully
-            </Badge>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
-              {createdMeeting.title}
-            </h1>
-            <p className="text-sm text-slate-300">
-              Scheduled with{' '}
-              <strong className="text-white">
-                {contactForCreated ? `${contactForCreated.name} (${contactForCreated.company})` : 'Stakeholder'}
-              </strong>{' '}
-              on{' '}
-              {new Date(createdMeeting.scheduledAt).toLocaleDateString(undefined, {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}.
-            </p>
-          </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <Button
+                variant="gradient"
+                size="md"
+                onClick={handleGenerateBrief}
+                disabled={preparingBrief}
+                leftIcon={<Sparkles className={`w-4 h-4 ${preparingBrief ? 'animate-spin' : ''}`} />}
+              >
+                {preparingBrief ? 'Generating AI Brief...' : 'Generate AI Briefing'}
+              </Button>
 
-          {/* Meeting Confirmation Card */}
-          <Card className="text-left bg-slate-900/90 border-slate-800">
-            <div className="space-y-3 text-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                <span className="text-slate-400">Meeting ID:</span>
-                <span className="font-mono text-indigo-400">{createdMeeting.id}</span>
-              </div>
-              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                <span className="text-slate-400">Duration & Type:</span>
-                <span className="text-slate-200">
-                  {createdMeeting.durationMinutes} min • {createdMeeting.meetingType}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-400 block mb-1">Agenda:</span>
-                <ul className="list-disc list-inside text-slate-200 space-y-0.5">
-                  {createdMeeting.agenda.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
+              <Link to={`/meetings/${createdMeeting.id}`}>
+                <Button variant="secondary" size="md">
+                  View Meeting Details
+                </Button>
+              </Link>
+
+              <Link to="/meetings">
+                <Button variant="outline" size="md">
+                  All Meetings
+                </Button>
+              </Link>
             </div>
           </Card>
-
-          {/* Action choices */}
-          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Button
-              variant="gradient"
-              size="lg"
-              isLoading={preparingBrief}
-              onClick={handlePrepareMeeting}
-              leftIcon={<Sparkles className="w-4 h-4" />}
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-            >
-              Prepare Meeting Brief
-            </Button>
-
-            <Link to="/meetings">
-              <Button variant="secondary" size="lg" leftIcon={<Calendar className="w-4 h-4" />}>
-                View in Meeting History
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </PageContainer>
-    );
-  }
-
-  return (
-    <PageContainer
-      maxWidth="4xl"
-      title={
-        <span className="flex items-center gap-2">
-          <CalendarPlus className="w-6 h-6 text-indigo-400" />
-          Schedule Stakeholder Meeting
-        </span>
-      }
-      subtitle="Schedule a new sync to enable Hindsight to synthesize historical memory and generate an intelligent briefing."
-    >
-      <div>
-        <Link
-          to="/meetings"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-200 mb-2 transition-colors"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" /> Back to Meeting History
-        </Link>
-      </div>
-
-      <Card>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Stakeholder Selector */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Select Stakeholder *
-            </label>
-            <div className="relative">
-              <select
-                value={formData.contactId}
-                onChange={(e) => setFormData({ ...formData, contactId: e.target.value })}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none cursor-pointer"
-              >
-                {contacts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} — {c.title} ({c.company})
-                  </option>
-                ))}
-              </select>
+        ) : (
+          /* Meeting Creation Form */
+          <div className="space-y-6">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-semibold mb-1">
+                <CalendarPlus className="w-3.5 h-3.5" />
+                <span>Firestore Meeting Ledger</span>
+              </div>
+              <h1 className="text-2xl font-bold text-white tracking-tight">Schedule New Meeting</h1>
+              <p className="text-xs text-slate-400">
+                Register a new meeting session to unlock cross-meeting Hindsight context and automated briefing synthesis.
+              </p>
             </div>
 
-            {selectedContact && (
-              <div className="mt-2.5 p-3 rounded-lg bg-slate-950/50 border border-slate-800 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2.5">
-                  <User className="w-4 h-4 text-indigo-400" />
-                  <span className="text-slate-300">
-                    <strong className="text-white">{selectedContact.name}</strong> • {selectedContact.company}
-                  </span>
-                </div>
-                <Badge variant="purple" size="sm">
-                  {selectedContact.previousMeetingsCount} Previous Syncs
-                </Badge>
+            {errorMessage && (
+              <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+                {errorMessage}
               </div>
             )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Meeting Core Information */}
+              <Card className="p-6 space-y-4">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-indigo-400" />
+                  <span>General Information</span>
+                </h2>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Meeting Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g. Q4 Executive Sync & Contract Review"
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Objective & Agenda Description
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe the main objectives and context for this meeting..."
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl p-3.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none transition-colors"
+                  />
+                </div>
+
+                {/* Timing & Location */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      Start Time *
+                    </label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      End Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      Location / Conference Link
+                    </label>
+                    <input
+                      type="text"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="https://meet.google.com/..."
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                      Initial Status
+                    </label>
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value as any)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none cursor-pointer"
+                    >
+                      <option value="upcoming">Upcoming</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Stakeholders & Attendees Section */}
+              <Card className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-indigo-400" />
+                    <span>Stakeholders & Attendees ({attendees.length})</span>
+                  </h2>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="xs"
+                    onClick={handleAddAttendee}
+                    leftIcon={<Plus className="w-3.5 h-3.5" />}
+                  >
+                    Add Attendee
+                  </Button>
+                </div>
+
+                {attendees.map((att, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-3 relative group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-indigo-300">
+                        Attendee #{idx + 1}
+                      </span>
+                      {attendees.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttendee(idx)}
+                          className="text-slate-400 hover:text-rose-400 transition-colors p-1"
+                          title="Remove attendee"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] text-slate-400 mb-1">Full Name *</label>
+                        <input
+                          type="text"
+                          required
+                          value={att.name}
+                          onChange={(e) => handleAttendeeChange(idx, 'name', e.target.value)}
+                          placeholder="e.g. John Matrix"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] text-slate-400 mb-1">Email Address</label>
+                        <input
+                          type="email"
+                          value={att.email}
+                          onChange={(e) => handleAttendeeChange(idx, 'email', e.target.value)}
+                          placeholder="john@techcorp.com"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-[11px] text-slate-400 mb-1">Company</label>
+                        <input
+                          type="text"
+                          value={att.company}
+                          onChange={(e) => handleAttendeeChange(idx, 'company', e.target.value)}
+                          placeholder="TechCorp"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] text-slate-400 mb-1">Role / Title</label>
+                        <input
+                          type="text"
+                          value={att.role}
+                          onChange={(e) => handleAttendeeChange(idx, 'role', e.target.value)}
+                          placeholder="CTO / Lead"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] text-slate-400 mb-1">LinkedIn Profile</label>
+                        <input
+                          type="text"
+                          value={att.linkedinUrl}
+                          onChange={(e) => handleAttendeeChange(idx, 'linkedinUrl', e.target.value)}
+                          placeholder="https://linkedin.com/in/..."
+                          className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </Card>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Link to="/meetings">
+                  <Button type="button" variant="secondary" size="md">
+                    Cancel
+                  </Button>
+                </Link>
+
+                <Button
+                  type="submit"
+                  variant="gradient"
+                  size="md"
+                  disabled={submitting}
+                  leftIcon={<CalendarPlus className="w-4 h-4" />}
+                >
+                  {submitting ? 'Creating Meeting in Firestore...' : 'Create Meeting'}
+                </Button>
+              </div>
+            </form>
           </div>
-
-          {/* Meeting Title */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Meeting Title *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Q4 Production Cutover & Architecture Sync"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Grid: Date/Time, Duration, Format */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Date & Time *
-              </label>
-              <input
-                type="datetime-local"
-                required
-                value={formData.scheduledAt}
-                onChange={(e) => setFormData({ ...formData, scheduledAt: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Duration
-              </label>
-              <select
-                value={formData.durationMinutes}
-                onChange={(e) => setFormData({ ...formData, durationMinutes: Number(e.target.value) })}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value={15}>15 Minutes</option>
-                <option value={30}>30 Minutes (Recommended)</option>
-                <option value={45}>45 Minutes</option>
-                <option value={60}>60 Minutes</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Meeting Format
-              </label>
-              <select
-                value={formData.meetingType}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    meetingType: e.target.value as CreateMeetingPayload['meetingType']
-                  })
-                }
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="executive-sync">Executive Sync</option>
-                <option value="technical-review">Technical Review</option>
-                <option value="1-on-1">1-on-1</option>
-                <option value="vendor-evaluation">Vendor Evaluation</option>
-                <option value="catch-up">Catch-up</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Agenda / Objectives */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Meeting Objective & Agenda Topics (One per line) *
-            </label>
-            <textarea
-              rows={4}
-              required
-              value={formData.agendaText}
-              onChange={(e) => setFormData({ ...formData, agendaText: e.target.value })}
-              placeholder="Topic 1&#10;Topic 2&#10;Topic 3"
-              className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono leading-relaxed"
-            />
-          </div>
-
-          {/* Optional Notes */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Optional Pre-Meeting Notes & Background
-            </label>
-            <textarea
-              rows={2}
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Any additional background context for your prep dossier..."
-              className="w-full px-3.5 py-2 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 leading-relaxed"
-            />
-          </div>
-
-          {/* Form Actions */}
-          <div className="pt-2 flex items-center justify-between border-t border-slate-800">
-            <Link to="/meetings">
-              <Button type="button" variant="ghost">
-                Cancel
-              </Button>
-            </Link>
-
-            <Button
-              type="submit"
-              variant="gradient"
-              size="lg"
-              isLoading={submitting}
-              leftIcon={<Sparkles className="w-4 h-4" />}
-              rightIcon={<ArrowRight className="w-4 h-4" />}
-            >
-              Schedule Meeting
-            </Button>
-          </div>
-        </form>
-      </Card>
+        )}
+      </div>
     </PageContainer>
   );
 };

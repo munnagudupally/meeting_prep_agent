@@ -1,4 +1,5 @@
 const { db, FieldValue } = require('../config/firebase');
+const hindsightService = require('../services/hindsightService');
 
 const MEMORIES_COLLECTION = 'memories';
 
@@ -82,6 +83,20 @@ async function createMemory(req, res, next) {
 
     const docRef = await db.collection(MEMORIES_COLLECTION).add(memoryData);
     const createdDoc = await docRef.get();
+
+    // Asynchronously retain in Hindsight Cloud
+    const hindsightContent = `[${category.toUpperCase()}] ${attendeeName ? `${attendeeName}: ` : ''}${note}`;
+    hindsightService.retainMemory(hindsightContent, {
+      memoryId: docRef.id,
+      meetingId,
+      userId: uid,
+      attendeeEmail,
+      attendeeName,
+      category,
+      sentiment
+    }, [category, attendeeName, attendeeEmail].filter(Boolean)).catch(err => {
+      console.warn('[Hindsight] Async memory retention failed (non-blocking):', err.message);
+    });
 
     return res.status(201).json({
       success: true,
